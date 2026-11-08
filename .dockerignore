@@ -1,0 +1,16 @@
+.git
+.github
+.local
+.vs
+**/bin
+**/obj
+**/node_modules
+**/appsettings.Local.json
+**/appsettings.Local.example.json
+.env
+.env.*
+artifacts
+publish
+TestResults
+**/*.backup
+**/*.dump

@@ -1,0 +1,56 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "API", "API", "{1AE8ACA6-933B-BF2A-3671-3E2EAC007D16}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeometryDash.Api", "GeometryDash.Api\GeometryDash.Api.csproj", "{EA7D2ABE-0964-4D82-8A6E-A1A3A530808D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeometryDash.DomainChecks", "tests\GeometryDash.DomainChecks\GeometryDash.DomainChecks.csproj", "{C565BAB9-0FF3-4D92-8A18-CF4D5854ADD9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EA7D2ABE-0964-4D82-8A6E-A1A3A530808D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA7D2ABE-0964-4D82-8A6E-A1A3A530808D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA7D2ABE-0964-4D82-8A6E-A1A3A530808D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EA7D2ABE-0964-4D82-8A6E-A1A3A530808D}.Debug|x64.Build.0 = Debug|Any CPU
+		{EA7D2ABE-0964-4D82-8A6E-A1A3A530808D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EA7D2ABE-0964-4D82-8A6E-A1A3A530808D}.Debug|x86.Build.0 = Debug|Any CPU
+		{EA7D2ABE-0964-4D82-8A6E-A1A3A530808D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA7D2ABE-0964-4D82-8A6E-A1A3A530808D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA7D2ABE-0964-4D82-8A6E-A1A3A530808D}.Release|x64.ActiveCfg = Release|Any CPU
+		{EA7D2ABE-0964-4D82-8A6E-A1A3A530808D}.Release|x64.Build.0 = Release|Any CPU
+		{EA7D2ABE-0964-4D82-8A6E-A1A3A530808D}.Release|x86.ActiveCfg = Release|Any CPU
+		{EA7D2ABE-0964-4D82-8A6E-A1A3A530808D}.Release|x86.Build.0 = Release|Any CPU
+		{C565BAB9-0FF3-4D92-8A18-CF4D5854ADD9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C565BAB9-0FF3-4D92-8A18-CF4D5854ADD9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C565BAB9-0FF3-4D92-8A18-CF4D5854ADD9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C565BAB9-0FF3-4D92-8A18-CF4D5854ADD9}.Debug|x64.Build.0 = Debug|Any CPU
+		{C565BAB9-0FF3-4D92-8A18-CF4D5854ADD9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C565BAB9-0FF3-4D92-8A18-CF4D5854ADD9}.Debug|x86.Build.0 = Debug|Any CPU
+		{C565BAB9-0FF3-4D92-8A18-CF4D5854ADD9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C565BAB9-0FF3-4D92-8A18-CF4D5854ADD9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C565BAB9-0FF3-4D92-8A18-CF4D5854ADD9}.Release|x64.ActiveCfg = Release|Any CPU
+		{C565BAB9-0FF3-4D92-8A18-CF4D5854ADD9}.Release|x64.Build.0 = Release|Any CPU
+		{C565BAB9-0FF3-4D92-8A18-CF4D5854ADD9}.Release|x86.ActiveCfg = Release|Any CPU
+		{C565BAB9-0FF3-4D92-8A18-CF4D5854ADD9}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{EA7D2ABE-0964-4D82-8A6E-A1A3A530808D} = {1AE8ACA6-933B-BF2A-3671-3E2EAC007D16}
+		{C565BAB9-0FF3-4D92-8A18-CF4D5854ADD9} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+	EndGlobalSection
+EndGlobal

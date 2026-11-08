@@ -1,0 +1,1000 @@
+﻿Especificación del sitio de creación de niveles
+Documento funcional y técnico para un juego web inspirado en Geometry Dash
+Versión de propuesta 1 · 1 de noviembre de 2026
+Este documento amplía Geometrydash.docx y convierte la idea original en una especificación para diseñar, desarrollar y probar el sitio. La propuesta conserva React para el frontend, ASP.NET Core para el backend y PostgreSQL para la base de datos. El objetivo es construir un juego sencillo que permita demostrar un backend completo, con autenticación, autorización, relaciones entre entidades, validación, transacciones y documentación de API.
+Las reglas marcadas con códigos RN son propuestas concretas para cerrar ambigüedades del documento base. Los límites numéricos, el modelo de publicación y las funcionalidades de administración son decisiones de diseño sugeridas, no requisitos previamente aprobados. Permiten iniciar la implementación y pueden ajustarse manteniendo coherencia entre frontend, API y base de datos.
+Cómo utilizar esta especificación
+Las partes 2 y 3 describen respectivamente el backend y el frontend. La parte 4 define todas las entidades del alcance propuesto, separando las tablas de los objetos que viven dentro del JSON de un nivel. Las partes restantes establecen las reglas de negocio, contratos, seguridad, criterios de aceptación y orden de desarrollo.
+El alcance inicial no incluye multijugador, pagos, chat, comentarios, seguidores, archivos subidos por usuarios ni clasificaciones competitivas. Estas exclusiones mantienen el proyecto centrado en la creación y publicación de niveles y evitan agregar entidades sin una necesidad funcional.
+Contenido
+1. Visión del producto y alcance
+2. Backend y distribución de responsabilidades
+3. Frontend y descripción de las pantallas
+4. Entidades y modelo de datos
+5. Formato y validación de los niveles
+6. Mecánicas y ejecución del juego
+7. Reglas de negocio
+8. Contratos de la API
+9. Flujos completos y transacciones
+10. Seguridad y protección de datos
+11. Operación y requisitos de calidad
+12. Pruebas y criterios de aceptación
+13. Plan de implementación y decisiones pendientes
+1 Visión del producto y alcance
+1 1 Experiencia principal
+El sitio permite que una persona se registre, construya un recorrido 2D con cubos, triángulos y plataformas, pruebe el recorrido y lo publique para que otras personas lo jueguen. El personaje avanza automáticamente y el jugador decide cuándo saltar. El valor social se concentra en descubrir niveles, puntuarlos, conservar favoritos y consultar los niveles completados.
+La página de inicio muestra el catálogo y explica brevemente cómo jugar y crear. Un visitante puede explorar y jugar sin cuenta, pero necesita iniciar sesión para guardar su progreso en el servidor, crear niveles, puntuar y usar favoritos. Esta posibilidad de jugar como invitado es una ampliación propuesta; no debe crear usuarios anónimos ni registros de progreso persistente.
+1 2 Requisitos conservados del documento original
+Código
+Requisito de origen
+Traducción funcional
+OR01
+Usuarios e inicio de sesión
+Registro, autenticación Bearer y operaciones según propietario
+OR02
+Creación con objetos básicos
+Editor con cubos, triángulos y plataformas
+OR03
+Salto con mouse o teclado
+Clic derecho y una tecla configurable con valor inicial Espacio
+OR04
+Modificar velocidad del juego
+Velocidad seleccionada por el autor y guardada en el nivel
+OR05
+Publicar y puntuar niveles
+Catálogo público y valoración de 1 a 5 propuesta
+OR06
+Niveles creados y completados
+Biblioteca personal separada por tipo
+OR07
+Agregar y remover favoritos
+Relación única entre usuario y nivel
+OR08
+Borrar niveles y sus favoritos
+Eliminación lógica con retiro transaccional de favoritos
+OR09
+Seguridad y validación
+Autorización, validación de estructura, límites y protección de sesiones
+OR10
+Documentación dentro del sitio
+Sección con operaciones, contratos, errores y ejemplos
+
+1 3 Roles y permisos
+Todo usuario registrado puede jugar y crear; no se necesita un rol adicional de creador. El rol Administrador es una ampliación para retirar contenido y suspender cuentas. La propiedad del nivel se verifica además del rol.
+Acción
+Visitante
+Usuario activo
+Administrador
+Explorar y jugar niveles públicos
+Sí
+Sí
+Sí
+Guardar partidas y consultar historial propio
+No
+Sí
+Sí
+Crear y editar borradores propios
+No
+Sí
+Sí
+Publicar y borrar niveles propios
+No
+Sí
+Sí
+Puntuar niveles ajenos y usar favoritos
+No
+Sí
+Sí
+Leer borradores de otras personas
+No
+No
+Solo mediante revisión autorizada
+Retirar contenido y suspender cuentas
+No
+No
+Sí con motivo y auditoría
+
+1 4 Alcance inicial y ampliaciones
+La primera entrega funcional debe incluir cuentas, editor, prueba local, publicación, catálogo, partidas, completados, favoritos, puntuaciones y documentación. El almacenamiento de resultados se presenta como progreso reportado por el cliente hasta implementar verificación de replay. No habrá tablas de posiciones que traten esos resultados como evidencia competitiva.
+La verificación reproducible del recorrido, los correos de confirmación y recuperación, y la administración avanzada pueden implementarse después de la primera entrega local. Antes de abrir registro público deben estar disponibles recuperación de acceso, controles de abuso y una forma operativa de retirar contenido.
+2 Backend y distribución de responsabilidades
+2 1 Arquitectura propuesta
+Se propone un monolito modular en ASP.NET Core. Una API y un proceso de trabajos en segundo plano, que al principio puede vivir en el mismo despliegue, son suficientes. PostgreSQL conserva cuentas, niveles, interacciones e historial. No se requieren microservicios, Kubernetes ni un servicio independiente por módulo.
+El navegador ejecuta el editor y el juego. La API administra permisos, valida el nivel, almacena versiones y acepta resultados. El backend nunca recibe código ejecutable escrito por el autor: recibe únicamente datos con un esquema permitido. El acceso a PostgreSQL ocurre desde el backend mediante EF Core y su proveedor correspondiente.
+2 2 Capas de la solución
+Proyecto lógico
+Responsabilidad
+Ejemplos
+Game.Api
+HTTP, autenticación, políticas, contratos y OpenAPI
+LevelsController, middleware de errores
+Game.Application
+Casos de uso, DTO y validación de solicitudes
+PublishLevel, SaveDraft, CompleteAttempt
+Game.Domain
+Entidades, invariantes y estados del negocio
+Level, LevelRevision, Rating
+Game.Infrastructure
+Persistencia, correo, tokens y servicios externos
+DbContext, Identity, repositorios
+Game.Tests
+Comprobación de reglas y flujos
+Publicación concurrente y eliminación
+
+Las capas de dominio y aplicación no deben depender de controladores. Los DTO públicos no son las entidades de EF Core. Esto evita que un cliente modifique OwnerId, roles, promedios o estados internos al enviar propiedades adicionales. MediatR puede organizar comandos y consultas si se desea practicarlo, pero no es un requisito funcional.
+2 3 Módulos de aplicación
+Identidad resuelve registro, login, renovación, logout y recuperación. Niveles administra metadatos, borradores y revisiones. Publicación valida una revisión y decide cuál aparece en el catálogo. Juego crea intentos y registra resultados. Interacciones administra favoritos y puntuaciones. Biblioteca construye vistas de creados y completados. Administración aplica retiros y suspensiones. Documentación expone el contrato de la API.
+Cada caso de uso verifica la identidad y carga los recursos que necesita. Por ejemplo, SaveDraft obtiene al usuario desde las credenciales, comprueba que es propietario y usa una versión de concurrencia. No acepta un OwnerId enviado por el navegador para decidir a quién pertenece el nivel.
+2 4 Publicación con revisiones inmutables
+Level representa la identidad estable del nivel y LevelRevision representa un contenido concreto. Un nivel puede tener varias revisiones publicadas y un solo borrador editable. Publicar sella el borrador, le asigna PublishedAt y cambia PublishedRevisionId en una transacción. Una revisión sellada nunca se edita.
+Al modificar un nivel publicado se crea un borrador copiando la última revisión publicada. La publicación anterior continúa jugable mientras el autor trabaja. Cuando publica la nueva revisión, los nuevos intentos utilizan esa revisión; las partidas ya iniciadas conservan su RevisionId. Los completados siguen vinculados a la revisión que realmente se jugó.
+Para el alcance inicial, título, descripción, dificultad declarada y contenido jugable viven en la revisión. Así, cambiar el título tampoco altera silenciosamente la ficha pública antes de publicar. Level conserva solamente propiedad, visibilidad, punteros y marcas de tiempo.
+2 5 Persistencia y consistencia
+Las operaciones que cambian varias tablas usan una transacción. Las consultas públicas comprueban que Level está publicado y que la revisión expuesta coincide con PublishedRevisionId. Una eliminación, retiro o suspensión debe invalidar también las respuestas cacheadas.
+Usar consultas paginadas y proyecciones para que el catálogo no cargue el JSON completo de cada nivel. El detalle jugable devuelve el contenido de una sola revisión. Se recomienda separar el DTO de tarjeta, el DTO de detalle público y el DTO privado de edición.
+La concurrencia se controla con un entero Version que aumenta en cada cambio. El cliente envía If-Match con la versión recibida como ETag. Una escritura sobre una versión antigua responde 412 y permite recuperar el borrador actual. No se debe resolver el conflicto sobrescribiendo de forma automática.
+2 6 Servicios y trabajos internos
+Un servicio de publicación valida estructura, límites y versión de físicas. Un servicio de resultados comprueba coherencia, cierra intentos y actualiza progreso. Un servicio de puntuaciones obtiene los agregados desde las valoraciones vigentes. Un proceso de mantenimiento expira sesiones, intentos abandonados y tokens de recuperación.
+La primera versión puede consultar los promedios directamente en PostgreSQL. Si después se almacenan contadores, deben actualizarse dentro de la misma transacción o tratarse como proyecciones reconstruibles. Redis se incorpora solo si aparece una necesidad real de caché compartida o límites distribuidos.
+3 Frontend y descripción de las pantallas
+3 1 Organización de React
+Se propone React con TypeScript y un enrutador. Los módulos de interfaz siguen los dominios auth, catalog, editor, game, library y admin. Los componentes visuales se separan de los servicios HTTP y del motor de físicas. Una librería de consultas puede gestionar caché, paginación, invalidación y estados de carga.
+El estado del editor contiene el documento local y su historial de deshacer. El estado del juego contiene la simulación activa y se actualiza fuera de los renders generales de React. React muestra menús, progreso y resultados; el mundo se dibuja en Canvas. No se crea un componente React por objeto que se actualice en cada frame.
+3 2 Navegación y estructura visual
+Ruta propuesta
+Pantalla
+Contenido principal
+/
+Inicio
+Presentación, acceso a jugar y niveles recientes
+/levels
+Explorar
+Buscador, filtros, orden y catálogo paginado
+/levels/:id
+Ficha del nivel
+Autor, descripción, revisión, puntuación y acciones
+/play/:id
+Juego
+Canvas, pausa, progreso y resultado
+/register y /login
+Acceso
+Formularios y mensajes de validación
+/account
+Mi cuenta
+Nombre visible, seguridad y cierre de sesión
+/my/levels
+Mis niveles
+Borradores, publicados y acciones de edición
+/editor/:id
+Editor
+Herramientas, propiedades, lienzo y prueba
+/my/completed
+Completados
+Mejor avance y revisiones terminadas
+/my/favorites
+Favoritos
+Niveles públicos conservados por el usuario
+/docs/backend
+Documentación
+Operaciones, esquemas, seguridad y ejemplos
+/admin
+Administración
+Retiros, suspensiones y auditoría según permiso
+
+La barra superior muestra Explorar, Crear y Documentación. Con sesión activa agrega Mi biblioteca y Mi cuenta. Una sesión expirada conserva el borrador local y solicita volver a entrar cuando se intenta guardar. El frontend puede ocultar acciones no disponibles, pero el permiso efectivo lo decide la API.
+3 3 Catálogo y ficha del nivel
+Cada tarjeta muestra título, autor, dificultad declarada, velocidad y puntuación media con cantidad de votos. Sin votos se muestra Sin puntuaciones en lugar de 0 estrellas. Se añaden accesos a jugar y a favoritos si existe sesión. La imagen de portada se genera a partir del nivel o usa un recurso del sitio; la primera entrega no necesita subir imágenes.
+El buscador trabaja por título. Los filtros iniciales son dificultad, velocidad y autor. Los órdenes propuestos son recientes, mejor valorados y más completados. Los dos últimos deben indicar si usan votos y resultados reportados; las valoraciones con pocos votos no se presentan como una medición objetiva de calidad. El orden se estabiliza con el identificador para evitar saltos de paginación.
+La ficha muestra los requisitos de control, el número de revisión pública y la advertencia de actualización cuando el jugador completó una revisión anterior. La puntuación corresponde a la revisión actual; el favorito corresponde a la identidad del nivel. Si el recurso fue eliminado se muestra Nivel no disponible y se permite volver al catálogo.
+3 4 Registro y acceso
+Registro solicita nombre de usuario, correo, contraseña y confirmación. La confirmación se valida en el cliente y no es un campo de la entidad. El servidor vuelve a validar todo. Durante el envío se bloquea el botón para evitar duplicados, pero el backend sigue protegiendo la unicidad.
+Login muestra errores genéricos, ofrece recuperación de contraseña y redirige a una ruta interna previamente solicitada. Nunca debe aceptar una URL externa arbitraria como redirección posterior. El formulario y sus errores pueden usarse con teclado y tienen etiquetas accesibles.
+3 5 Editor de niveles
+El editor se divide en barra superior, paleta de objetos, lienzo central y panel de propiedades. La barra contiene título, estado de guardado, deshacer, rehacer, probar, guardar y publicar. La paleta contiene cubo, triángulo y plataforma. El panel muestra posición, tamaño permitido y rotación del objeto seleccionado.
+El autor coloca un objeto en la cuadrícula, lo selecciona y puede moverlo, duplicarlo o eliminarlo. El lienzo permite desplazamiento horizontal y zoom sin alterar las coordenadas reales. Una vista general ayuda a ubicar inicio y meta. La selección múltiple y los atajos avanzados son mejoras posteriores; no son necesarios para cerrar el primer editor.
+Los metadatos editables son título, descripción y dificultad declarada. La configuración jugable incluye longitud, velocidad e información de inicio y meta dentro de sus límites. La gravedad, el impulso de salto y el tamaño del jugador se fijan por PhysicsVersion para impedir niveles incompatibles con la validación del servidor.
+El guardado automático espera dos segundos de inactividad y nunca se ejecuta mientras hay una solicitud previa pendiente. La interfaz distingue Guardando, Guardado en servidor, Cambios locales y No se pudo guardar. Un guardado local no se etiqueta como guardado remoto. Al salir con cambios sin sincronizar se presenta una advertencia.
+En caso de 412, el editor conserva una copia local y ofrece recargar el borrador del servidor o descargar/copiar los datos para resolver el conflicto. El alcance inicial no incluye edición colaborativa ni una fusión automática de objetos.
+3 6 Prueba y publicación desde el editor
+Probar ejecuta una copia del borrador en memoria y no crea progreso público. Al terminar, se vuelve al editor sin perder cambios. El frontend muestra errores de colocación antes del envío, pero la publicación usa la validación definitiva del backend.
+Publicar guarda primero el borrador y luego envía la versión esperada a la operación de publicación. Si guardar falla, no publica la última copia remota silenciosamente. El diálogo de revisión muestra título, cantidad de objetos, velocidad y los errores que impiden publicar. Un éxito abre la ficha pública.
+3 7 Pantalla de juego y biblioteca
+El juego muestra una cuenta breve de inicio, el personaje, la barra de avance y acciones de pausa, reinicio y salida. Al morir muestra el avance alcanzado y Reiniciar. Al ganar muestra Nivel completado y el estado de sincronización. Si falla el guardado del resultado, la interfaz permite reintentar con el mismo identificador; no inventa un completado confirmado.
+Mis niveles separa borradores y publicados. Completados distingue Completado en revisión actual y Completado en una revisión anterior. Favoritos permite quitar un nivel sin abrirlo. Cada lista tiene estados de carga, vacío, error y reintento, además de paginación independiente.
+3 8 Compatibilidad y accesibilidad
+El objetivo inicial es navegador de escritorio con teclado y mouse. Las páginas de catálogo y cuenta se adaptan a móvil. Jugar por toque puede añadirse como entrada equivalente; editar en pantallas pequeñas queda fuera del alcance inicial. Todos los menús deben funcionar por teclado y mantener foco visible.
+El clic derecho solo suprime el menú contextual dentro del área del juego. Espacio no debe desplazar la página mientras el Canvas tenga el foco y el juego esté activo. Los atajos se desactivan al escribir en formularios. El estado de pausa y los errores no se comunican únicamente mediante color.
+4 Entidades y modelo de datos
+4 1 Convenciones del modelo
+Los identificadores de dominio serán UUID. Las fechas se guardan en UTC con timestamptz. Los nombres de tablas pueden usar snake_case. Los estados se representan con valores acotados y restricciones CHECK. Los identificadores de autor, jugador y administrador se obtienen de la sesión autenticada.
+PK significa clave primaria y FK clave foránea. Los tipos indicados son una propuesta lógica para PostgreSQL. Cuando se use ASP.NET Core Identity se reutilizan sus entidades de usuario, roles, claims y tokens; no se debe crear un segundo almacén de contraseñas. Los campos del catálogo siguiente describen el dominio aunque algunos se implementen mediante Identity.
+4 2 User
+Representa una cuenta que puede crear y jugar. No incluye un registro separado de Player o Creator porque son capacidades de la misma persona. Sus datos privados no se devuelven en la ficha pública del autor.
+Campo
+Tipo
+Regla
+Id
+uuid PK
+Identidad estable
+UserName y NormalizedUserName
+varchar 30
+Único normalizado; entre 3 y 30 caracteres
+Email y NormalizedEmail
+varchar 254
+Obligatorio y único normalizado
+PasswordHash
+text
+Administrado por Identity; jamás se devuelve
+DisplayName
+varchar 60
+Entre 1 y 60; texto sin HTML
+Status
+varchar 20
+Active, Suspended o Deleted
+EmailConfirmed
+boolean
+Controla funciones si se exige verificación
+CreatedAt y UpdatedAt
+timestamptz
+Generados por el servidor
+SecurityVersion
+integer
+Permite invalidar credenciales tras cambios críticos
+
+Normalizar mayúsculas y minúsculas de forma consistente; no eliminar puntos o etiquetas del correo suponiendo reglas de un proveedor. Suspender una cuenta impide crear sesiones y escribir. El contenido ya público se mantiene salvo retiro explícito, evitando retirar automáticamente todos los niveles por una sanción de acceso.
+4 3 Role y UserRole
+Role contiene Id y Name único. Los roles iniciales son User y Administrator. UserRole relaciona UserId y RoleId con clave primaria compuesta. Un usuario puede tener más de un rol. Los claims y tablas auxiliares de Identity se incorporan cuando la configuración de autenticación los requiera; son infraestructura, no nuevas funcionalidades del juego.
+El registro asigna User desde el servidor. Ningún DTO de registro, perfil o login permite seleccionar Administrator. El primer administrador se provisiona mediante una operación de despliegue controlada.
+4 4 AuthSession
+Representa una sesión renovable en un dispositivo. Permite cerrar una sesión concreta y detectar reutilización de un token renovable. Los access tokens no necesitan una fila por cada emisión.
+Campo
+Tipo
+Regla
+Id y UserId
+uuid PK y FK
+Una cuenta tiene muchas sesiones
+RefreshTokenHash
+text
+Único; se guarda el hash del secreto
+FamilyId y ReplacedBySessionId
+uuid y uuid nullable
+Relacionan la rotación y revocación
+CreatedAt y ExpiresAt
+timestamptz
+Vigencia definida por el servidor
+RevokedAt
+timestamptz nullable
+Marca una sesión no renovable
+DeviceLabel
+varchar 100 nullable
+Información descriptiva sin confiar en ella
+
+ReplacedBySessionId referencia otra AuthSession. Una renovación consume el token anterior y crea el sucesor de forma atómica. Si el token consumido vuelve a aparecer, se revoca su familia. El sistema debe serializar la renovación y el cliente debe agrupar solicitudes simultáneas para evitar falsos positivos.
+4 5 AccountActionToken
+Soporta confirmación de correo y recuperación de contraseña cuando se habiliten. Campos: Id uuid PK, UserId uuid FK, Purpose limitado a EmailConfirmation o PasswordReset, TokenHash único, ExpiresAt, UsedAt nullable y CreatedAt. Un token solo puede consumirse una vez y no se almacena en texto plano.
+Si Identity proporciona un mecanismo de tokens con garantías equivalentes, esta tabla puede omitirse y documentarse esa decisión. El flujo de recuperación debe responder de forma genérica exista o no el correo. No se usa el mismo token para dos propósitos.
+4 6 Level
+Es la identidad estable de una creación. Sus favoritos sobreviven a una nueva publicación porque no dependen de la revisión. Un nivel eliminado deja de ser recuperable por la API pública aunque conserve filas internas por integridad histórica.
+Campo
+Tipo
+Regla
+Id y OwnerId
+uuid PK y FK
+El propietario no cambia en el alcance inicial
+Status
+varchar 20
+Draft, Published, Withdrawn o Deleted
+PublishedRevisionId
+uuid nullable FK
+Revisión sellada visible; nulo antes de publicar
+DraftRevisionId
+uuid nullable FK
+Único borrador editable del nivel
+Version
+integer
+Concurrencia para acciones sobre el nivel
+CreatedAt y UpdatedAt
+timestamptz
+Marcas del servidor
+DeletedAt y WithdrawnAt
+timestamptz nullable
+Registro del retiro correspondiente
+
+Los punteros deben señalar revisiones del mismo LevelId. Puede implementarse mediante claves foráneas compuestas y claves únicas de apoyo. La creación del nivel y su primer borrador ocurre en una transacción, usando punteros inicialmente nulos para resolver la referencia circular.
+4 7 LevelRevision
+Guarda una instantánea completa del nivel. RevisionNumber aumenta por nivel y no se reutiliza. Un borrador puede actualizarse hasta sellarse. Se crea otro borrador para la siguiente modificación.
+Campo
+Tipo
+Regla
+Id y LevelId
+uuid PK y FK
+Relación muchos a uno con Level
+RevisionNumber
+integer
+Único junto con LevelId
+Title
+varchar 80
+Entre 3 y 80 caracteres
+Description
+varchar 2000
+Texto plano; puede estar vacía
+Difficulty
+varchar 20
+Easy, Normal o Hard declarados por el autor
+State
+varchar 20
+Draft o Published
+Content
+jsonb
+Documento completo con objetos y configuración
+SchemaVersion y PhysicsVersion
+integer
+Versiones aceptadas por el servidor
+ContentHash
+varchar 64
+SHA256 del contenido canónico generado por servidor
+ObjectCount
+integer
+Derivado del JSON; no se confía en el cliente
+Version
+integer
+Concurrencia del borrador
+CreatedAt y PublishedAt
+timestamptz y nullable
+PublishedAt existe solo al sellar
+
+ContentHash se recalcula al guardar y permite vincular pruebas con un contenido exacto. La igualdad del hash no demuestra que el nivel se pueda completar. Una restricción única parcial en LevelId cuando State = Draft impide dos borradores simultáneos.
+4 8 Favorite
+Tabla de unión con UserId FK, LevelId FK y CreatedAt. La PK compuesta UserId y LevelId impide duplicados. No necesita un Id artificial. Solo se agrega sobre niveles publicados disponibles; puede quitarse aunque el contenido haya sido retirado.
+Al borrar un nivel se eliminan todas sus filas Favorite en la misma transacción. Como Level usa eliminación lógica, esta limpieza requiere DELETE explícito: ON DELETE CASCADE por sí solo no se ejecutaría. Una eliminación física posterior también puede tener cascada como defensa adicional.
+4 9 Rating
+Representa la valoración de una revisión jugable. Se vincula a la revisión porque una publicación nueva puede cambiar radicalmente la dificultad o calidad. El catálogo muestra el agregado de la revisión actual y no mezcla opiniones sobre contenidos distintos.
+Campo
+Tipo
+Regla
+UserId y RevisionId
+uuid FK y PK compuesta
+Un voto por persona y revisión
+Score
+smallint
+Entero de 1 a 5 con CHECK
+CreatedAt y UpdatedAt
+timestamptz
+Mantiene fecha original y última edición
+
+El autor no puede valorar su propia revisión. Para puntuar se requiere al menos un intento finalizado sobre esa revisión; no es obligatorio completarla. Editar la nota reemplaza el valor y no aumenta el número de votos. Borrar la nota reduce el conteo. Promedio y conteo se calculan desde Rating; no son valores editables por API.
+4 10 PlayAttempt
+Representa una ejecución autenticada sobre una revisión pública. No se registra un evento en base de datos por cada frame. La fila inicial identifica el contexto y la fila final resume el resultado.
+Campo
+Tipo
+Regla
+Id y UserId
+uuid PK y FK
+El servidor asigna jugador y propietario del intento
+RevisionId
+uuid FK
+Inmutable durante toda la partida
+State
+varchar 20
+Started, Finished, Abandoned o Expired
+Outcome
+varchar 20 nullable
+Dead, Completed o Quit al finalizar
+ProgressPercent
+numeric 5 2
+Entre 0 y 100; calculado o contrastado por servidor
+StartedAt y FinishedAt
+timestamptz y nullable
+Hora del servidor
+ElapsedTicks y PauseTicks
+bigint
+Enteros no negativos con límites
+VerificationStatus
+varchar 20
+ClientReported, Pending, Verified o Rejected
+PhysicsVersion y ContentHash
+integer y varchar 64
+Fijan reglas y contenido utilizados
+ClientResultId
+uuid nullable
+Identificador estable para reintentos de envío
+
+Un intento solo puede cerrarse una vez. Repetir exactamente el resultado devuelve el cierre existente; enviar otro resultado para el mismo intento produce conflicto. El tiempo de red no se interpreta como tiempo de juego. Los intentos de prueba de borradores se mantienen fuera de esta tabla pública.
+4 11 UserRevisionProgress
+Agrega el progreso de una persona sobre una revisión. Campos: UserId y RevisionId como PK compuesta y FK, AttemptsCount integer, BestProgress numeric 5 2, FirstCompletedAt nullable, LastPlayedAt, LastCompletedAt nullable, CompletionCount integer y BestVerifiedTicks bigint nullable.
+FirstCompletedAt se asigna una sola vez cuando llega un resultado de finalización aceptado. La política inicial admite resultados ClientReported y los identifica así en la interfaz. BestVerifiedTicks solo se actualiza con resultados Verified. Un resultado rechazado no mejora el progreso ni suma una finalización.
+El contador de intentos aumenta al crear un intento, una vez por Id. El progreso y los completados se actualizan al cerrarlo, en la misma transacción que PlayAttempt. Las actualizaciones usan incremento atómico y máximo, para no perder resultados concurrentes.
+4 12 LevelPlaytest
+Entidad opcional para una fase que exija demostrar que el autor termina su nivel. Campos: Id uuid PK, LevelId FK, DraftRevisionId FK, OwnerId FK, ContentHash, PhysicsVersion, Result, VerificationStatus, CompletedAt y ExpiresAt nullable. Solo una prueba verificada del mismo hash y la misma física puede habilitar publicación bajo esa política.
+En el MVP, una prueba local ayuda al autor pero no demuestra solvencia ante el servidor. Por ello, LevelPlaytest no es obligatoria para publicar en esa fase y el sitio no afirmará que todos sus niveles son completables. Cambiar un objeto o la velocidad invalida la prueba anterior.
+4 13 AuditEvent
+Registra acciones relevantes de seguridad o administración. Campos: Id uuid PK, ActorUserId nullable FK, Action varchar 80, TargetType varchar 40, TargetId uuid nullable, Reason varchar 1000 nullable, CorrelationId varchar 100, CreatedAt y Metadata jsonb con esquema limitado.
+Se registra retiro, republicación administrativa, suspensión, cambio de roles y eliminación. Los metadatos no incluyen contraseñas, tokens, correos completos innecesarios ni cuerpos completos de peticiones. Una auditoría no es una tabla de logs de cada frame o lectura del catálogo.
+4 14 Entidades opcionales de evolución
+ReplayArtifact se añade con verificación de partidas: Id PK, AttemptId FK único, StorageKey, Hash, FormatVersion, ByteLength y CreatedAt. Guarda la referencia a una secuencia acotada de entradas; no una grabación de video. El contenido puede almacenarse como bytes en PostgreSQL al inicio o en almacenamiento de objetos al crecer.
+OutboxMessage se añade si se necesita entregar de forma fiable correos o trabajos posteriores a una transacción: Id PK, Type, Payload jsonb mínimo, OccurredAt, ProcessedAt nullable, RetryCount y NextAttemptAt. Su procesamiento es al menos una vez y el consumidor debe ser idempotente. No se requiere una cola externa para el primer despliegue.
+No se proponen tablas Comment, Payment, Follow, ChatMessage o AssetUpload porque sus funciones no forman parte del alcance acordado. Si se incorporan después, deben especificarse antes sus permisos, moderación y ciclo de vida.
+4 15 Objetos que no son tablas
+LevelObject, SpawnPoint, FinishLine y LevelSettings son objetos de valor dentro de Content. No necesitan persistencia independiente en el alcance inicial. PublicLevelCard, LevelDetails, SaveDraftRequest, AttemptResult y PagedResult son DTO de API. LevelStatistics es una proyección calculada. Ninguno representa por sí mismo una nueva tabla de negocio.
+Guardar cada cubo como fila solo sería necesario si se requieren consultas o edición independiente por objeto. Aquí se guarda el documento completo de la revisión en jsonb y se conserva la identidad local de cada objeto para seleccionarlo en el editor.
+4 16 Relaciones e índices
+Relación
+Cardinalidad
+Consecuencia
+User a Level
+Uno a muchos
+El propietario gestiona sus creaciones
+Level a LevelRevision
+Uno a muchos
+Publicaciones históricas inmutables
+User a AuthSession
+Uno a muchos
+Varias sesiones revocables
+User a Level mediante Favorite
+Muchos a muchos
+Un favorito por pareja
+User a LevelRevision mediante Rating
+Muchos a muchos
+Un voto por revisión
+User y LevelRevision a PlayAttempt
+Uno a muchos desde ambos
+Historial de ejecuciones
+User a LevelRevision mediante progreso
+Muchos a muchos
+Un resumen por revisión
+
+Además de las PK, crear índices en Level(OwnerId, UpdatedAt), Level(Status, UpdatedAt, Id), LevelRevision(LevelId, RevisionNumber), Favorite(UserId, CreatedAt), Rating(RevisionId), PlayAttempt(UserId, StartedAt), PlayAttempt(RevisionId, StartedAt) y UserRevisionProgress(UserId, LastPlayedAt). Indexar las FK consultadas; PostgreSQL no convierte automáticamente toda FK en un índice de búsqueda.
+La búsqueda inicial por título normalizado puede usar un mecanismo simple compatible con su volumen. No se presupone que un índice B tree acelere una búsqueda con comodín inicial. Si el catálogo crece, evaluar un índice de búsqueda adecuado. El JSON no necesita un índice GIN mientras no se consulten objetos internos desde SQL.
+5 Formato y validación de los niveles
+5 1 Contrato del documento jugable
+Se propone una cuadrícula de unidades lógicas independiente de píxeles. El origen horizontal está al inicio y y crece hacia arriba. El render convierte estas coordenadas al sistema del Canvas. El piso base ocupa y = 0 durante todo el recorrido; los huecos se excluyen del primer alcance.
+Propiedad
+Tipo
+Significado
+schemaVersion
+integer
+Versión de la estructura JSON
+physicsVersion
+integer
+Versión del comportamiento del motor
+length
+integer
+Coordenada de final del recorrido
+speedMultiplier
+number
+Velocidad fijada por el autor
+spawn
+object
+Posición inicial del jugador
+finishX
+number
+Posición horizontal de meta
+objects
+array
+Lista de objetos del nivel
+
+{
+  "schemaVersion": 1,
+  "physicsVersion": 1,
+  "length": 300,
+  "speedMultiplier": 1.0,
+  "spawn": { "x": 2, "y": 0 },
+  "finishX": 298,
+  "objects": [
+    { "id": "obj_01", "type": "cube", "x": 14, "y": 0,
+      "width": 1, "height": 1, "rotation": 0 },
+    { "id": "obj_02", "type": "triangle", "x": 20, "y": 0,
+      "width": 1, "height": 1, "rotation": 0 },
+    { "id": "obj_03", "type": "platform", "x": 26, "y": 2,
+      "width": 4, "height": 0.5, "rotation": 0 }
+  ]
+}
+Este ejemplo ilustra el contrato; no certifica que el recorrido completo sea superable. Los identificadores de objetos solo son únicos dentro de la revisión. Las coordenadas x e y representan la esquina inferior izquierda de la caja de cada objeto; el triángulo y la plataforma usan esa caja para derivar su geometría.
+5 2 Límites iniciales propuestos
+Parámetro
+Límite inicial
+Aplicación
+Objetos por revisión
+De 1 a 2000 para publicar
+El borrador vacío se permite
+Longitud
+De 100 a 5000 unidades
+Entero; meta dentro del recorrido
+Altura editable
+De 0 a 30 unidades
+El objeto completo debe caber
+Cuadrícula
+Pasos de 0.5 unidades
+El backend verifica cuantización
+Velocidad
+0.75, 1.0, 1.25 o 1.5
+Lista cerrada; sin valores arbitrarios
+Tamaño cubo y triángulo
+1 por 1 unidad
+Evita escalado libre inicial
+Plataforma
+Ancho de 1 a 10 y alto 0.5
+Ancho en pasos de 0.5
+Rotación inicial
+Solo 0 grados
+Evita semántica ambigua de colisión
+JSON por revisión
+Hasta 512 KiB en UTF8
+Límite antes y después de parsear
+Título y descripción
+3 a 80 y 0 a 2000 caracteres
+Sin HTML ni scripts
+Niveles activos por usuario
+Hasta 50
+Borradores y publicados juntos
+
+Estos valores son parámetros de arranque para probar rendimiento y experiencia. Aumentarlos requiere medir el motor, la validación y el tamaño de respuestas. El límite de bytes se aplica al documento completo, no solamente al arreglo objects.
+5 3 Validaciones de publicación
+Se rechazan tipos desconocidos, propiedades no admitidas, números no finitos, objetos fuera de límites e identificadores duplicados. La estructura se deserializa a tipos acotados; no se almacena JSON arbitrario esperando que el frontend lo interprete. El servidor calcula conteo y hash tras normalizar el documento.
+El inicio debe ser seguro y la meta estar después de él. Se reserva una zona inicial sin obstáculos y una zona final libre de colisiones mortales. Un objeto sólido no puede intersecar otro sólido; se permite contacto exacto entre sus bordes. Un triángulo no puede ocupar el interior de un sólido. La política se valida con geometría, no comparando únicamente si x e y son iguales.
+Validar estas condiciones reduce errores, pero no demuestra que exista una secuencia de saltos ganadora. La dificultad la declara el autor y no se calcula como hecho objetivo. Los errores devuelven rutas como objects[12].x para que el editor señale el elemento afectado.
+5 4 Compatibilidad del formato
+El servidor rechaza SchemaVersion y PhysicsVersion no admitidas. Una versión antigua publicada conserva su contrato y se juega con el motor correspondiente. No se cambia la gravedad global de revisiones históricas al desplegar una mejora. Si se retira soporte, el contenido se marca temporalmente no disponible y se define una migración explícita.
+El hash canónico requiere ordenar propiedades y representar números con reglas estables. Ordenar los objetos por id antes de calcularlo evita diferencias por serialización sin alterar su identidad. El algoritmo exacto forma parte del contrato interno y debe compartirse con el verificador.
+6 Mecánicas y ejecución del juego
+6 1 Objetos y colisiones
+El jugador es un cubo de tamaño fijo que avanza hacia la derecha a velocidad constante. La velocidad real resulta de una velocidad base multiplicada por speedMultiplier. Los parámetros base se definen en PhysicsVersion y no se envían como opciones libres del autor.
+El cubo es sólido: aterrizar sobre su cara superior proporciona apoyo, mientras golpear su costado produce muerte. El triángulo es un peligro: tocar su geometría letal termina la partida. La plataforma es sólida y elevada; su superficie superior permite aterrizar y sus caras laterales e inferior producen muerte en esta propuesta. La tolerancia geométrica se fija por la versión del motor para evitar resultados distintos entre cliente y verificador.
+6 2 Entrada y salto
+El documento original solicita clic derecho o una letra del teclado. Se conserva el clic derecho y se propone Espacio como asignación inicial, con opción de elegir una letra como W. Ambas entradas producen exactamente una acción JumpPressed.
+Un salto se acepta únicamente cuando el personaje tiene apoyo. No hay doble salto, vuelo ni salto continuo por mantener presionada la tecla. El motor ignora la repetición automática del teclado y unifica entradas simultáneas del mismo tick para no generar dos saltos. El MVP no incluye ventanas de salto adicionales; cualquier tolerancia futura debe versionarse.
+6 3 Estados del juego
+Los estados de interfaz son Loading, Ready, Running, Paused, Dead, Completed y Error. Ready espera una acción de inicio. Running procesa físicas. Paused congela el tiempo de simulación. Dead y Completed son terminales para ese intento. Reiniciar crea otro intento, conserva la misma revisión descargada y restablece el mundo.
+Al perder foco o esconder la pestaña se pausa automáticamente. Reanudar muestra una cuenta breve para evitar una muerte inmediata. Un intento expira en el servidor después de 30 minutos reales como límite propuesto, incluso si se pausó; el cliente consulta vigencia antes de seguir guardando resultados tras una pausa larga.
+6 4 Tiempo y avance
+La simulación usa pasos fijos propuestos de 1 sobre 120 de segundo; el dibujo puede seguir la frecuencia del dispositivo. La física no depende del número de renders de React. El motor limita la recuperación de frames atrasados y pausa si no puede mantener una simulación estable, evitando saltar una gran distancia sin comprobar colisiones.
+El avance se calcula como la distancia horizontal recorrida respecto de spawn.x y finishX, limitada al rango de 0 a 100. Solo se asigna 100 al cruzar la meta vivo. En un tick con colisión mortal y cruce de meta, la colisión mortal tiene prioridad. Pausar no aumenta avance ni tiempo de simulación.
+6 5 Resultados y confianza
+Para un proyecto de backend inicial, el cliente puede reportar progreso, desenlace y ticks. El servidor verifica rangos, identidad, estado, vigencia y coherencia temporal, pero esos controles no prueban que el usuario jugó honestamente. El resultado se guarda como ClientReported y puede alimentar la biblioteca personal con esa condición visible.
+La fase de verificación envía una secuencia de ticks con acciones de salto. Un trabajador reproduce las entradas sobre la revisión y PhysicsVersion exactas, calcula el resultado y cambia el estado a Verified o Rejected. Debe usar aritmética reproducible, orden estable de colisiones y límites de CPU y tamaño. Una simulación con floats distintos entre motores no garantiza coincidencia automáticamente.
+Incluso un replay válido demuestra una secuencia aceptada por las reglas, no que una persona humana la ejecutó sin automatización. Por eso no se promete protección absoluta contra trampas. El proyecto puede demostrar integridad de resultados sin introducir una clasificación competitiva.
+7 Reglas de negocio
+7 1 Cuentas y permisos
+RN01. Un correo normalizado y un nombre de usuario normalizado identifican una sola cuenta. La base de datos impone la unicidad además de la validación de aplicación. Dos registros concurrentes no pueden crear dos cuentas iguales.
+RN02. Solo una cuenta Active realiza escrituras. Un usuario suspendido no renueva sesión. El backend comprueba su estado o una versión de seguridad para que un token emitido antes de la suspensión no siga habilitando acciones de escritura.
+RN03. Solo el propietario edita, publica o elimina su nivel. Un administrador retira contenido mediante un caso de uso separado y auditado; no se hace pasar por propietario.
+RN04. Cambiar nombre visible no altera identificadores, propiedad ni relaciones. El correo y los datos de sesión nunca se publican junto al nombre del autor.
+7 2 Creación y publicación
+RN05. Crear un nivel produce Level en Draft y una LevelRevision editable. Un borrador vacío puede guardarse para continuar después, pero no publicarse.
+RN06. Cada nivel admite como máximo un borrador editable y una revisión pública actual. Mantener un borrador de una nueva versión no retira la publicación vigente.
+RN07. Publicar requiere ser propietario, tener cuenta activa, enviar la versión esperada y pasar validación completa. La API no se conforma con una validación previa del navegador.
+RN08. Una revisión publicada es inmutable. Cambiar velocidad, objetos o metadatos requiere otra revisión. El identificador estable de Level conserva sus favoritos y URL.
+RN09. La prueba local del autor no certifica que un nivel pueda completarse. La obligación de una prueba verificada solo se habilita al implementar LevelPlaytest y el motor reproducible.
+RN10. Una nueva publicación inicia su conjunto de valoraciones y progreso por revisión. El historial anterior permanece disponible para el usuario con su número de revisión, sin aparentar que completó el contenido nuevo.
+7 3 Favoritos y valoraciones
+RN11. Una pareja UserId y LevelId admite un favorito. Agregarlo dos veces no crea dos filas. Remover uno inexistente produce el mismo estado final y responde sin error funcional.
+RN12. Solo se agregan favoritos a niveles publicados disponibles. Retirar temporalmente un nivel oculta su favorito del listado público del usuario, pero puede conservar la relación para restaurarla al republicar. Eliminarlo definitivamente desde el sitio elimina la relación para todos.
+RN13. Se permite una valoración entera de 1 a 5 por usuario y revisión publicada. El autor no puede valorar su propia creación. Se requiere un intento terminado aceptado sobre esa revisión, aunque haya resultado en muerte.
+RN14. Modificar una valoración reemplaza su puntuación. El promedio es suma de puntuaciones dividida por número de votos, con redondeo solo para presentación. Sin votos se devuelve averageRating = null y ratingCount = 0.
+RN15. Si se retira una valoración, las estadísticas dejan de incluirla. Una publicación nueva no hereda la nota de la anterior. Las valoraciones antiguas se conservan internamente hasta cumplir la política de conservación.
+7 4 Intentos y completados
+RN16. Todo intento persistente pertenece al usuario autenticado y a una revisión pública concreta. El usuario no puede enviar resultados sobre el intento de otra persona.
+RN17. Un intento pasa de Started a Finished, Abandoned o Expired. Los estados terminales no vuelven a Started. Un intento Finished tiene desenlace Dead, Completed o Quit.
+RN18. Un resultado Completed exige cruzar la meta sin muerte. Un progreso arbitrario de 100 enviado por el cliente no basta para considerarlo verificado. La API diferencia aceptación de reporte y verificación del recorrido.
+RN19. Repetir un cierre con el mismo ClientResultId y contenido devuelve el resultado guardado. Cambiar el contenido para un intento cerrado responde 409. La actualización del historial y de los contadores sucede una sola vez.
+RN20. Al publicarse una revisión nueva, las partidas iniciadas sobre la anterior pueden finalizar durante su vigencia si el nivel sigue publicado. Los intentos nuevos usan la revisión actual. No se permite iniciar deliberadamente una revisión histórica desde la API pública inicial.
+RN21. Si el nivel fue eliminado o retirado, el cierre pendiente se rechaza con un código estable de no disponibilidad y no actualiza progreso. La interfaz explica que la partida local terminó pero no pudo registrarse.
+RN22. Mis completados agrupa por nivel y permite ver revisiones. Si se completó una revisión antigua se conserva el logro histórico; la revisión actual solo aparece completada cuando tiene su propio resultado aceptado.
+7 5 Eliminación y administración
+RN23. Borrar un nivel marca Level como Deleted, elimina sus favoritos, cierra sus intentos pendientes como Abandoned e invalida el catálogo en una transacción. El historial queda como referencia privada de contenido no disponible; no devuelve el JSON eliminado.
+RN24. La eliminación lógica no permite al propietario restaurar desde la interfaz inicial. Repetir la eliminación de su mismo recurso devuelve 204. Una política posterior de borrado físico decidirá cuándo purgar revisiones y resultados asociados.
+RN25. Retirar por administración usa Withdrawn y exige motivo. Mientras esté retirado, el propietario puede ver su contenido privado pero no volver a publicarlo por sí mismo. Un administrador puede rehabilitarlo mediante una acción auditada.
+RN26. La eliminación de cuenta revoca sesiones, elimina favoritos y valoraciones, y retira sus niveles con las mismas reglas de limpieza. El historial propio se purga o anonimiza según la política definida antes de abrir el sitio al público. La eliminación de cuenta es una ampliación; no se improvisa con un borrado en cascada general.
+7 6 Concurrencia y límites
+RN27. Una escritura de borrador requiere If-Match. Si dos pestañas editan la versión 5, solo una puede crear la versión 6; la otra recibe 412. La falta del encabezado requerido responde 428.
+RN28. La publicación y la eliminación se serializan sobre Level. No puede terminar publicado un nivel que ya fue eliminado. Crear favorito y borrar nivel usan el mismo control transaccional para impedir relaciones insertadas después de la limpieza.
+RN29. Los límites de objetos, tamaño, longitud y cuentas activas se aplican en la API aunque el cliente modifique sus controles. Los límites de negocio responden 422; el exceso de tamaño de petición puede responder 413 antes de deserializar.
+RN30. Las acciones de autor no pueden establecer directamente métricas de comunidad. Conteo de votos, progreso, fechas y contadores provienen de operaciones controladas del servidor.
+8 Contratos de la API
+8 1 Convenciones comunes
+Base propuesta: /api/v1. Las respuestas usan JSON y fechas ISO 8601 en UTC. Las listas contienen items, page, pageSize y totalCount. Los valores iniciales son page = 1 y pageSize = 20 con máximo de 100. Los filtros y órdenes se restringen a listas permitidas; no se concatena SQL desde parámetros.
+Los errores siguen un formato Problem Details con type, title, status, detail y instance, más code, traceId y errors cuando corresponde. Los mensajes no incluyen stack traces. Los códigos funcionales como LEVEL_NOT_AVAILABLE o DRAFT_VERSION_CONFLICT son estables aunque se traduzca el texto.
+Estado HTTP
+Uso propuesto
+200 y 201
+Lectura o actualización; creación con Location cuando aplica
+202
+Trabajo de verificación aceptado y pendiente
+204
+Operación sin cuerpo, como quitar favorito
+400
+JSON mal formado o contrato inválido
+401
+Credenciales ausentes, inválidas o vencidas
+403
+Cuenta o rol sin permiso general
+404
+Recurso inexistente o privado para ese usuario
+409
+Estado incompatible o cierre con contenido diferente
+412 y 428
+Versión no coincidente o If-Match requerido ausente
+413 y 422
+Cuerpo demasiado grande o regla de negocio incumplida
+429
+Límite de solicitudes; incluir Retry-After
+
+8 2 Identidad
+Método y ruta
+Acceso
+Entrada y resultado
+POST /auth/register
+Público limitado
+userName, displayName, email y password; crea cuenta
+POST /auth/login
+Público limitado
+email y password; accessToken y usuario básico
+POST /auth/refresh
+Cookie de renovación
+Rota sesión y devuelve nuevo accessToken
+POST /auth/logout
+Sesión
+Revoca renovación, limpia cookie y devuelve 204
+GET /me
+Usuario
+Perfil privado básico sin hash ni tokens
+PATCH /me
+Usuario
+Cambia displayName; devuelve perfil
+POST /auth/forgot-password
+Público limitado
+email; respuesta genérica 202
+POST /auth/reset-password
+Token de propósito
+token y newPassword; consume token
+
+Los endpoints de correo se habilitan al integrar el mecanismo de recuperación. Logout revoca la renovación; la revocación inmediata de un access token requiere verificar sesión o SecurityVersion en peticiones. Esta propuesta exige esa comprobación en escrituras y usa access tokens de corta duración.
+8 3 Niveles y publicación
+Método y ruta
+Acceso
+Entrada y resultado
+GET /levels
+Público
+Filtros y página; tarjetas de revisión pública
+GET /levels/{id}
+Público
+Ficha de la publicación actual sin datos privados
+GET /levels/{id}/content
+Público
+JSON público, revisionId, hash y versión de físicas
+POST /levels
+Usuario
+title y descripción inicial; crea nivel y borrador
+GET /me/levels
+Usuario
+Lista propia por estado
+GET /levels/{id}/draft
+Propietario
+Borrador completo y ETag
+POST /levels/{id}/draft
+Propietario
+Copia publicación a borrador si no existe
+PUT /levels/{id}/draft
+Propietario
+Metadatos y content con If-Match; nuevo ETag
+POST /levels/{id}/publish
+Propietario
+draftRevisionId y versiones esperadas; sella revisión
+DELETE /levels/{id}
+Propietario
+Elimina y limpia favoritos; 204
+
+La publicación envía expectedLevelVersion junto con If-Match de la revisión para proteger ambos recursos. Una repetición sobre la misma revisión ya sellada devuelve la publicación existente si sigue siendo la actual. Si el nivel cambió, responde conflicto en vez de crear otra revisión sin intención del autor.
+8 4 Interacciones y juego
+Método y ruta
+Acceso
+Entrada y resultado
+PUT /levels/{id}/favorite
+Usuario
+Sin cuerpo; deja favorito presente
+DELETE /levels/{id}/favorite
+Usuario
+Deja favorito ausente; 204
+GET /me/favorites
+Usuario
+Tarjetas vigentes paginadas
+PUT /revisions/{id}/rating
+Usuario
+score entero; crea o reemplaza nota
+DELETE /revisions/{id}/rating
+Usuario
+Retira nota propia; 204
+POST /levels/{id}/attempts
+Usuario
+expectedRevisionId; crea intento y fija snapshot
+PUT /attempts/{id}/result
+Dueño del intento
+clientResultId, outcome, ticks y avance
+GET /attempts/{id}
+Dueño del intento
+Estado y resultado de verificación
+GET /me/completed
+Usuario
+Historial agrupado y revisión actual completada
+GET /me/attempts
+Usuario
+Ejecuciones propias paginadas
+
+Si la ficha cambió entre descargar y comenzar, expectedRevisionId evita jugar un contenido y registrar el intento sobre otro. La API responde 409 con la revisión vigente para que el cliente vuelva a descargarla. Los invitados juegan localmente y no llaman a creación de intentos persistentes.
+8 5 Administración y documentación
+Método y ruta
+Acceso
+Resultado
+POST /admin/levels/{id}/withdraw
+Administrador
+Retira contenido con reason obligatorio
+POST /admin/levels/{id}/restore
+Administrador
+Rehabilita publicación retirada
+POST /admin/users/{id}/suspend
+Administrador
+Suspende cuenta e invalida escrituras
+POST /admin/users/{id}/activate
+Administrador
+Reactiva cuenta sin recuperar sesiones viejas
+GET /admin/audit
+Administrador
+Auditoría filtrada y paginada
+GET /openapi/v1.json
+Público sanitizado
+Contrato de operaciones documentadas
+
+La ruta web /docs/backend presenta el esquema OpenAPI con una interfaz de consulta. Cada operación incluye propósito, acceso, parámetros, body, respuesta exitosa, errores y un ejemplo. El contrato explica la diferencia entre nivel y revisión y entre un resultado reportado y uno verificado.
+8 6 Ejemplo de guardado y error
+PUT /api/v1/levels/{id}/draft incluye Authorization: Bearer y If-Match: "7". El cuerpo contiene title, description, difficulty y content con el formato del apartado 5. La respuesta devuelve revisionId, version = 8, updatedAt y ETag: "8". No devuelve entidades de autenticación ni metadatos internos de auditoría.
+{
+  "type": "about:blank",
+  "title": "El borrador contiene objetos fuera del nivel",
+  "status": 422,
+  "code": "LEVEL_GEOMETRY_INVALID",
+  "traceId": "trace-example-01",
+  "errors": {
+    "content.objects[12].x": ["El objeto excede la longitud permitida"]
+  }
+}
+8 7 Ejemplo de cierre de intento
+{
+  "clientResultId": "fa7e85d1-1000-4000-8000-000000000001",
+  "outcome": "Completed",
+  "elapsedTicks": 4200,
+  "pauseTicks": 0,
+  "progressPercent": 100
+}
+El servidor ya conoce UserId, RevisionId, hash y PhysicsVersion desde la creación del intento. No los toma del cierre para cambiar de contexto. En el MVP responde con verificationStatus = ClientReported y el progreso aceptado. En la fase de replay puede responder 202 con Pending y una URL de consulta; solo después de verificar actualiza los agregados aceptados según la política de esa fase.
+9 Flujos completos y transacciones
+9 1 Crear y publicar un nivel
+1. El usuario autenticado solicita crear. La API comprueba estado y cuota, inserta Level y su borrador, y devuelve identificadores y versiones.
+2. El editor modifica el documento local y envía guardados con If-Match. El backend valida lo admisible para borrador, recalcula hash e incrementa Version.
+3. Probar ejecuta el borrador local. Las pruebas no modifican puntuaciones ni completados públicos.
+4. Al publicar, el servidor bloquea el nivel, verifica las dos versiones y valida la revisión completa. Si aplica la fase de prueba verificada, compara su hash.
+5. En la misma transacción sella la revisión, cambia PublishedRevisionId, vacía DraftRevisionId, cambia Status a Published e incrementa Level.Version.
+6. La API confirma el commit y devuelve la ficha. Las invalidaciones de caché o eventos posteriores no deben ejecutarse antes de que la transacción tenga éxito.
+Si la validación falla, la publicación anterior continúa disponible y el borrador permanece editable. Si falla la persistencia, no debe quedar un puntero a una revisión parcialmente publicada.
+9 2 Jugar y registrar un completado
+1. El cliente descarga la revisión pública y crea un intento enviando expectedRevisionId. La API devuelve AttemptId y el contexto fijado.
+2. El motor ejecuta esa revisión. Pausas y saltos se contabilizan en ticks; no se envían solicitudes por frame.
+3. Al morir o completar, el cliente construye un resultado con ClientResultId estable y lo conserva mientras espera respuesta.
+4. El backend verifica dueño, estado, disponibilidad y coherencia. Dentro de la transacción cierra el intento y actualiza UserRevisionProgress exactamente una vez.
+5. Si se pierde la respuesta, se repite el mismo resultado. El servidor devuelve el cierre existente sin duplicar el completado.
+6. La biblioteca se invalida o vuelve a consultar. La interfaz indica la confianza del resultado, sin etiquetarlo como Verified cuando solo fue reportado.
+9 3 Agregar favorito mientras se elimina un nivel
+Ambas operaciones deben bloquear la misma fila Level o usar un mecanismo equivalente que garantice el mismo orden. Agregar comprueba Published después de adquirir el control. Eliminar marca Deleted y borra Favorite antes del commit. Si agregar llegó primero, la eliminación lo limpia; si llegó después, ve Deleted y se rechaza.
+Una FK normal contra Level no resuelve por sí sola esta carrera porque la fila del nivel sigue existiendo tras una eliminación lógica. Este caso necesita una prueba de integración con dos conexiones reales a PostgreSQL.
+9 4 Puntuar y consultar estadísticas
+El servidor verifica que la revisión pertenece a un nivel disponible, que el votante no es el propietario y que tiene un intento finalizado aceptado. Inserta o actualiza Rating mediante su clave compuesta. La consulta de ficha calcula AVG y COUNT para esa revisión. Dos votos simultáneos de la misma persona no crean filas duplicadas.
+Si la revisión deja de ser la actual durante la operación, la política propuesta permite modificar una valoración histórica de una revisión que el usuario jugó mientras el nivel siga publicado. La ficha actual sigue mostrando únicamente su propio conjunto de votos.
+9 5 Fallos de red y recuperación
+El cliente puede repetir lecturas y operaciones idempotentes tras fallos transitorios. No repite un POST de creación de nivel ciegamente: debe usar una clave de idempotencia acotada al usuario o consultar el resultado antes de crear otro recurso. El cierre de intento tiene su propia identidad estable.
+El borrador local se asocia a UserId, LevelId y revisión base. Al cambiar de cuenta no se mezcla con otra biblioteca. Un borrador local recuperado se presenta para revisión y no sobrescribe automáticamente una versión remota más reciente.
+10 Seguridad y protección de datos
+10 1 Autenticación y sesión
+Usar HTTPS. Los access tokens Bearer deben validar firma, emisor, audiencia y vigencia. Se propone duración inicial de 15 minutos y una sesión renovable con máximo absoluto de 7 días. Estos valores son configurables; la renovación no debe ampliar indefinidamente la vida de la familia original.
+En el frontend se propone mantener el access token en memoria. El token de renovación viaja en una cookie Secure, HttpOnly y SameSite adecuada al despliegue. Publicar frontend y API bajo el mismo sitio simplifica esta política. No se guarda un refresh token en localStorage ni se imprime en logs.
+Si refresh y logout usan cookies, deben protegerse contra CSRF mediante comprobación estricta de origen y un token antifalsificación cuando corresponda. CORS permite únicamente orígenes definidos y no combina credenciales con un origen comodín. Elegir SameSite sin considerar si los dominios son distintos puede romper la renovación; esa decisión se prueba en el entorno real.
+10 2 Autorización por recurso
+El backend aplica políticas de rol y verificaciones de propiedad. Obtener el UUID de un nivel no concede acceso a su borrador. Las consultas privadas filtran por propietario y devuelven 404 cuando mostrar la existencia del recurso no corresponde. Las lecturas de intentos y bibliotecas siempre se limitan al usuario actual.
+Una cuenta suspendida pierde capacidad de escritura aunque conserve un access token aún no vencido. El cierre de sesión global, el cambio de contraseña y la recuperación incrementan SecurityVersion o revocan sesiones según el diseño elegido. La comprobación debe tener una política explícita de caché e invalidación.
+10 3 Protección frente a abuso
+Operación
+Propuesta inicial
+Clave del límite
+Login
+5 intentos fallidos por minuto
+Cuenta normalizada y protección adicional por IP
+Registro y recuperación
+3 por hora por operación
+IP con controles adicionales de abuso
+Lecturas públicas
+120 por minuto
+IP con ráfaga acotada
+Guardar borrador
+30 por minuto
+Usuario
+Publicar
+5 por minuto
+Usuario
+Crear intentos
+60 por minuto
+Usuario, con máximo de activos
+Favoritos y valoraciones
+30 por minuto
+Usuario
+
+Los umbrales se calibran con uso real. El límite por IP debe considerar redes compartidas y proxies confiables. No se confía en cualquier X-Forwarded-For enviado por Internet. Con varias réplicas, un contador exclusivamente en memoria por instancia no garantiza un límite global.
+Además se limita el cuerpo HTTP, profundidad de JSON, cantidad de objetos, longitud de textos, intentos activos y tiempo de validación. Los endpoints de replay tendrán un presupuesto independiente de bytes, ticks y CPU. Un 429 devuelve Retry-After y el cliente no reintenta en un bucle inmediato.
+10 4 Datos no confiables
+Título, descripción y nombre visible se tratan como texto. React debe renderizarlos como texto y nunca como HTML arbitrario. El JSON de nivel admite solamente campos tipados; no contiene scripts, URLs externas ni expresiones que se evalúen. Las consultas usan parámetros y las reglas no dependen exclusivamente del frontend.
+Los errores públicos excluyen stack traces, cadenas de conexión y detalles del servidor. Los secretos se configuran fuera del repositorio. Los logs registran identificadores y códigos útiles para diagnóstico, con acceso restringido. No se registran contraseñas, Authorization, cookies ni tokens de recuperación.
+10 5 Datos privados y conservación
+El perfil público expone identificador, nombre visible y creaciones públicas. Correo, sesiones e historial detallado permanecen privados. El MVP no necesita pedir dirección, documento de identidad, fecha de nacimiento ni ubicación exacta.
+Como política de producto inicial, se propone conservar intentos detallados 90 días y mantener resúmenes de progreso mientras exista la cuenta. Tokens usados y sesiones vencidas se purgan tras un periodo técnico corto. Las auditorías tienen una conservación separada. Estos plazos son propuestas operativas y deben cerrarse antes de lanzar el sitio; no constituyen una afirmación de cumplimiento legal.
+10 6 Documentación segura
+La documentación debe usar correos ficticios, UUID de ejemplo y tokens sin validez. La función de probar endpoints aplica los mismos permisos y límites que cualquier cliente. No se incrusta una credencial administrativa en Swagger ni se habilitan endpoints internos por hacerlos visibles en la documentación.
+11 Operación y requisitos de calidad
+11 1 Rendimiento y límites de experiencia
+Como objetivos medibles iniciales, el catálogo debería responder en menos de 500 ms en percentil 95 y las escrituras habituales en menos de 1 segundo, excluyendo red del usuario y trabajos de replay. Se medirán con 50 usuarios concurrentes y niveles de hasta 2000 objetos en un entorno descrito en el informe de prueba. Son metas para validar, no garantías existentes.
+El juego busca dibujar a 60 FPS en un equipo de escritorio de referencia sin vincular esa frecuencia con la física. Se mide el coste de actualización y dibujo con un nivel cercano al límite. El motor puede usar partición espacial para comprobar colisiones solo con objetos cercanos.
+11 2 Despliegue y migraciones
+Separar frontend estático, API y PostgreSQL mediante configuración por ambiente. Un despliegue inicial puede usar una sola instancia de API y una base administrada o equivalente. Los dominios, orígenes permitidos, conexión y secretos son variables del entorno. No se necesita incorporar infraestructura compleja para demostrar las reglas de negocio.
+Las migraciones de EF Core se revisan y ejecutan una sola vez por despliegue mediante una tarea controlada. No todas las réplicas deben intentar migrar al arrancar. Una migración destructiva requiere copia de seguridad y una estrategia de compatibilidad con la aplicación desplegada.
+11 3 Observabilidad y respaldo
+Cada petición tiene CorrelationId y se registran ruta, estado, duración y código funcional. Las métricas mínimas son tasa de errores, latencia, publicaciones fallidas, conflictos de borrador, cierres rechazados y límites activados. Una caída del correo no debe impedir leer el catálogo ni ejecutar partidas locales.
+Disponer de health checks de disponibilidad de proceso y de preparación para atender solicitudes. Los detalles de conexión no se publican en el endpoint público. Se propone respaldo diario, con objetivo inicial de pérdida máxima de 24 horas y recuperación en 4 horas, sujeto al proveedor y a una prueba de restauración real.
+11 4 Calidad del contrato y documentación
+OpenAPI se genera a partir del contrato implementado y se revisa con cada cambio. La sección web incluye una introducción al dominio, guía para obtener Bearer, catálogo de errores y ejemplos de publicación y partida. No basta con mostrar nombres de endpoints sin describir reglas como propiedad, revisiones o idempotencia.
+El documento presente es una especificación propuesta, no evidencia de que los endpoints o pantallas ya existen. Durante el desarrollo se actualiza con las decisiones adoptadas y las desviaciones justificadas.
+12 Pruebas y criterios de aceptación
+12 1 Estrategia de comprobación
+Las pruebas unitarias cubren invariantes: estados, límites, cálculo de progreso y elegibilidad para votar. Las pruebas de integración usan PostgreSQL real para claves únicas, transacciones, JSON, concurrencia y agregados. Un proveedor en memoria no reproduce esos comportamientos de forma suficiente.
+Las pruebas del motor usan recorridos pequeños con entradas por tick y resultados conocidos. Se comprueba que distintos ritmos de dibujo produzcan la misma simulación. Las pruebas de extremo a extremo cubren registrar, crear, guardar, publicar, jugar y consultar la biblioteca. Las pruebas de autorización intentan cruzar recursos entre dos cuentas.
+12 2 Escenarios de aceptación esenciales
+Código
+Escenario
+Resultado esperado
+AC01
+Dos registros concurrentes con el mismo correo
+Solo uno crea cuenta; no hay duplicados
+AC02
+Usuario B intenta editar borrador de A
+404; no cambia ningún campo
+AC03
+Dos pestañas guardan con el mismo ETag
+Una guarda; otra recibe 412 y conserva copia local
+AC04
+Publicar un borrador vacío
+422 con errores; no aparece en catálogo
+AC05
+JSON con tipo desconocido o 2001 objetos
+Rechazo sin persistir revisión pública
+AC06
+Editar un nivel ya publicado
+La revisión pública anterior permanece estable
+AC07
+Publicar una nueva revisión
+Cambia contenido público sin perder favoritos
+AC08
+Agregar favorito dos veces
+Una relación y una tarjeta
+AC09
+Borrar nivel guardado por varias personas
+Ningún favorito conserva el nivel eliminado
+AC10
+Agregar favorito concurrentemente con borrar
+No queda una relación posterior a la eliminación
+AC11
+Autor intenta puntuar su nivel
+Rechazo; promedio y conteo no cambian
+AC12
+Cambiar nota de 2 a 5
+Un voto; promedio recalculado
+AC13
+Reenviar el mismo cierre de partida
+Un cierre y un único incremento del completado
+AC14
+Cambiar el cierre de un intento finalizado
+409; no mejora progreso
+AC15
+Completar revisión antigua tras nueva publicación
+Se registra sobre la antigua si el nivel sigue disponible
+AC16
+Enviar resultado después de borrar el nivel
+No registra completado ni revela contenido
+AC17
+Suspender cuenta con token vigente
+Nuevas escrituras y renovación se rechazan
+AC18
+Mantener presionada la tecla de salto
+No genera saltos adicionales por repetición automática
+AC19
+Ocultar pestaña durante partida
+Se pausa y no avanza la simulación
+AC20
+Consultar ficha sin votos
+averageRating nulo y conteo cero
+
+12 3 Casos adicionales de seguridad y recuperación
+Comprobar que el registro no permite asignar roles, que las respuestas nunca incluyen hashes, que la recuperación no revela si un correo existe y que los tokens de renovación usados no pueden renovarse de nuevo. Probar entradas HTML en títulos y cadenas que intenten modificar filtros SQL.
+Desconectar la red durante un guardado y un cierre de intento. El editor debe indicar cambios locales y permitir recuperarlos; el juego debe distinguir resultado local de confirmado. Aplicar 429 deliberadamente y verificar que el frontend respeta el periodo indicado.
+12 4 Definición de entrega terminada
+Una funcionalidad está terminada cuando su pantalla, operación de API, persistencia y regla de autorización funcionan juntas; los errores tienen códigos coherentes; se cumplen los escenarios relacionados y la documentación describe el contrato real. Para publicación se incluye el caso de nueva revisión, no solamente el primer nivel creado.
+Antes de uso público se realiza una revisión operativa de secretos, respaldos, recuperación de cuenta, límites y retiro de contenido. No es necesario construir todas las ampliaciones para demostrar el proyecto, pero sí describir con precisión qué garantías ofrece la entrega.
+13 Plan de implementación y decisiones pendientes
+13 1 Etapas con resultados comprobables
+Etapa
+Construcción
+Evidencia de cierre
+1 Base e identidad
+Solución, PostgreSQL, migraciones, cuentas y sesión
+Dos usuarios acceden y no cruzan datos privados
+2 Niveles y editor
+Level, Revision, JSON, guardado y concurrencia
+Crear, reabrir y resolver conflicto de borrador
+3 Juego local
+Movimiento, salto, colisiones, pausa y meta
+Recorridos conocidos funcionan con físicas estables
+4 Publicación y catálogo
+Validación, revisiones públicas y ficha
+Editar sin modificar una publicación existente
+5 Interacciones
+Favoritos, puntuaciones y eliminación
+Unicidad y limpieza comprobadas con concurrencia
+6 Biblioteca de juego
+Intentos, cierres idempotentes y progreso
+Completados por revisión sin duplicar resultados
+7 Exposición pública
+Recuperación, administración, límites y operación
+Retirar contenido, recuperar acceso y restaurar respaldo
+8 Verificación opcional
+Replay, trabajador y prueba del autor
+Misma secuencia produce resultado verificable
+
+La documentación se actualiza en todas las etapas. No se deja para el final porque el proyecto quiere demostrar el backend y sus contratos. Cada etapa entrega un flujo funcional pequeño y permite corregir el modelo antes de incorporar más funciones.
+13 2 Decisiones propuestas listas para revisar
+Tema
+Propuesta usada en este documento
+Efecto de cambiarla
+Control de salto
+Clic derecho y Espacio configurable
+Afecta entrada y tutorial; no las entidades
+Participación sin cuenta
+Explorar y jugar localmente
+Exigir cuenta reduce rutas públicas
+Significado de puntuar
+Calidad de 1 a 5 estrellas
+No equivale a récord o puntuación de juego
+Dificultad
+Declarada por autor
+Una dificultad automática requiere otra lógica
+Cambio de velocidad
+Configuración del nivel por autor
+Velocidad libre del jugador debe ser modo práctica
+Votos y completados
+Asociados a revisión
+Asociarlos al nivel mezclaría contenidos diferentes
+Favoritos
+Asociados a nivel estable
+Mantienen utilidad tras una actualización
+Garantía de completado
+ClientReported en el MVP
+Verified exige replay y motor reproducible
+Prueba antes de publicar
+Recomendada localmente en el MVP
+Hacerla obligatoria y fiable requiere LevelPlaytest
+Eliminación
+Lógica con limpieza real de favoritos
+La purga física requiere política histórica
+Mecánicas
+Tres objetos, piso continuo y salto simple
+Huecos, portales y doble salto amplían el esquema
+
+13 3 Resumen de entidades para comenzar
+El núcleo persistente es User, Role, UserRole, AuthSession, Level, LevelRevision, Favorite, Rating, PlayAttempt y UserRevisionProgress. AccountActionToken se incorpora si no se delega ese flujo a Identity. AuditEvent soporta administración y seguridad. LevelPlaytest, ReplayArtifact y OutboxMessage se añaden cuando sus funciones se implementen.
+La primera decisión de diseño que debe mantenerse consistente es separar la identidad del nivel de su contenido publicado. Esa separación resuelve edición, favoritos, historial y resultados sobre versiones anteriores. La segunda es declarar la confianza de las partidas: un resultado validado en estructura no equivale a una ejecución verificada.
+13 4 Trazabilidad del documento
+Fuente funcional: Geometrydash.docx suministrado por el usuario. Se conservan su objetivo, sus tres tecnologías, los objetos básicos y sus capacidades sociales. Las entidades, estados, contratos, valores de límites, reglas RN y criterios AC son ampliaciones de diseño elaboradas para convertir esa base en un proyecto implementable.
+No se incluyen estimaciones de costo, fechas de entrega ni garantías de capacidad de proveedores. El siguiente paso de implementación sería traducir las etapas a tareas y migraciones, manteniendo este documento como referencia funcional y técnica.

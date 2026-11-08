@@ -1,0 +1,15 @@
+.local/
+.vs/
+artifacts/
+publish/
+**/bin/
+**/obj/
+**/node_modules/
+**/appsettings.Local.json
+*.user
+*.suo
+.env
+.env.*
+!.env.example
+TestResults/
+*.log

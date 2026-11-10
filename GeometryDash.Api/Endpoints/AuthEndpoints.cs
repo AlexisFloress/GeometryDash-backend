@@ -29,7 +29,7 @@ public static class AuthEndpoints
             if (!role.Succeeded) throw new InvalidOperationException("No se pudo asignar el rol User.");
             await tx.CommitAsync();
             return Results.Created("/api/v1/me", SessionService.Profile(user));
-        }).RequireRateLimiting("register").WithSummary("Crear una cuenta; el servidor asigna el rol User.");
+        }).RequireRateLimiting("register").WithSummary("Crea una cuenta para guardar tus niveles, partidas y favoritos. Después debes iniciar sesión.");
 
         auth.MapPost("/login", async (LoginRequest req, HttpContext ctx, UserManager<AppUser> users, AppDbContext db, SessionService sessions) => {
             sessions.RequireOrigin(ctx);
@@ -41,7 +41,7 @@ public static class AuthEndpoints
             }
             await users.ResetAccessFailedCountAsync(user);
             return Results.Ok(await sessions.Issue(ctx, user));
-        }).RequireRateLimiting("login").WithSummary("Obtener Bearer de 15 minutos y cookie HttpOnly de renovación.");
+        }).RequireRateLimiting("login").WithSummary("Inicia sesión con tu correo y contraseña para acceder a tu cuenta.");
 
         auth.MapPost("/refresh", async (HttpContext ctx, AppDbContext db, SessionService sessions) => {
             sessions.RequireOrigin(ctx);
@@ -64,7 +64,7 @@ public static class AuthEndpoints
             var response = await sessions.Issue(ctx, user, old);
             await tx.CommitAsync();
             return Results.Ok(response);
-        }).RequireRateLimiting("login").WithSummary("Rotar el refresh token; reutilizarlo revoca toda su familia.");
+        }).RequireRateLimiting("login").WithSummary("Renueva tu sesión para seguir usando tu cuenta sin volver a escribir la contraseña, mientras la sesión siga siendo válida.");
 
         auth.MapPost("/logout", async (HttpContext ctx, AppDbContext db, SessionService sessions) => {
             sessions.RequireOrigin(ctx);
@@ -83,14 +83,14 @@ public static class AuthEndpoints
             }
             ctx.Response.Cookies.Delete(SessionService.CookieName, sessions.CookieOptions());
             return Results.NoContent();
-        }).RequireRateLimiting("login");
+        }).RequireRateLimiting("login").WithSummary("Cierra la sesión que estás usando en este navegador.");
         app.MapGet("/api/v1/me", async (HttpContext ctx, AppDbContext db) => SessionService.Profile(await db.Users.SingleAsync(u => u.Id == ctx.UserId())))
-            .RequireAuthorization().WithTags("Identidad");
+            .RequireAuthorization().WithTags("Identidad").WithSummary("Muestra los datos de tu propia cuenta. Necesitas haber iniciado sesión.");
         app.MapPatch("/api/v1/me", async (ProfileRequest req, HttpContext ctx, AppDbContext db) => {
             if (string.IsNullOrWhiteSpace(req.DisplayName) || req.DisplayName.Trim().Length > 60) throw new ApiError(422, "PROFILE_INVALID", "Nombre de 1 a 60 caracteres.");
             var user = await db.Users.SingleAsync(u => u.Id == ctx.UserId());
             user.DisplayName = req.DisplayName.Trim(); await db.SaveChangesAsync();
             return Results.Ok(SessionService.Profile(user));
-        }).RequireAuthorization().RequireRateLimiting("write").WithTags("Identidad");
+        }).RequireAuthorization().RequireRateLimiting("write").WithTags("Identidad").WithSummary("Cambia el nombre que muestras en tu perfil. Necesitas haber iniciado sesión.");
     }
 }

@@ -60,6 +60,10 @@ Otra opción es copiar `.env.example` a `.env`, establecer `POSTGRES_PASSWORD` y
 
 ## Funciones
 
+Consulta [qué hace cada endpoint](docs/endpoints.md) para leer una explicación sencilla de cada operación y saber quién puede usarla. Estas explicaciones también aparecen en la documentación web de `/docs/backend`.
+
+La documentación y el probador al final de la página están disponibles sin iniciar sesión, tanto en desarrollo como en producción. Después de desplegar esta versión, se podrán abrir en https://geometrydash-api.onrender.com/docs/backend. El probador usa el servicio desde el que se abre la página, sin depender de localhost. Para probar inicio de sesión, renovación y cierre desde el dominio del backend, incluye también `https://geometrydash-api.onrender.com` en `AllowedOrigins`; conserva los orígenes del frontend que ya uses. Configura `AllowedHosts` con el nombre público del backend. Si sirves el frontend bajo el mismo dominio, conserva sus reglas para reenviar `/api/*` y `/openapi/*` al backend, antes del fallback de React.
+
 Identity, JWT y sesiones renovables; perfiles; borradores privados y concurrencia If-Match; validación de geometría; publicación por revisiones; catálogo; favoritos; votos; intentos y progreso; administración y auditoría. Los resultados de partidas son **ClientReported**, sin verificación de replay.
 
 El frontend llama a `/api/v1` y descarga `/openapi/v1.json`; no hay dependencia hacia su carpeta ni su repositorio. El backend admite los orígenes locales 5080/5173. En producción configura los dominios reales y HTTPS.

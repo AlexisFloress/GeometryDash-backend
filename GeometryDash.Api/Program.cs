@@ -101,10 +101,11 @@ app.UseStatusCodePages(async status => {
     await ctx.Response.WriteAsJsonAsync(new { type = "about:blank", title = "Solicitud rechazada.", status = ctx.Response.StatusCode, code = $"HTTP_{ctx.Response.StatusCode}", traceId = ctx.TraceIdentifier });
 });
 app.UseDefaultFiles(); app.UseStaticFiles(); app.UseRouting(); app.UseCors(); app.UseAuthentication(); app.UseRateLimiter(); app.UseAuthorization();
-app.MapOpenApi("/openapi/{documentName}.json");
+app.MapOpenApi("/openapi/{documentName}.json").AllowAnonymous();
 app.MapGet("/health/live", () => Results.Ok(new { status = "ok" })).ExcludeFromDescription();
 app.MapGet("/health/ready", async (AppDbContext db) => { try { return await db.Database.CanConnectAsync() && await db.Roles.AnyAsync() ? Results.Ok(new { status = "ready" }) : Results.StatusCode(503); } catch { return Results.StatusCode(503); } }).ExcludeFromDescription();
 app.MapAuth(); app.MapLevels(); app.MapInteractions(); app.MapAdmin();
-app.MapGet("/docs/backend", () => Results.Redirect("/"));
+app.MapGet("/docs/backend", () => Results.File(Path.Combine(app.Environment.WebRootPath, "index.html"), "text/html; charset=utf-8"))
+    .AllowAnonymous().WithSummary("Abre la documentación pública del backend, donde cualquier persona puede leer qué hace cada operación y usar el probador al final de la página.");
 app.Run();
 public partial class Program;

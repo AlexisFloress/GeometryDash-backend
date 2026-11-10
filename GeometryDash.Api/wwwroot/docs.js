@@ -8,14 +8,47 @@ async function loadOperations() {
     for (const [path, methods] of Object.entries(spec.paths)) {
       for (const [method, operation] of Object.entries(methods)) {
         if (!['get', 'post', 'put', 'patch', 'delete'].includes(method)) continue;
-        const button = document.createElement('button'); button.type = 'button'; button.className = 'op';
+        const article = document.createElement('article'); article.className = 'operation';
+        const heading = document.createElement('h3');
         const verb = document.createElement('strong'); verb.textContent = method.toUpperCase();
-        const label = document.createElement('span'); label.textContent = path + (operation.summary ? ' · ' + operation.summary : '');
-        button.append(verb, label); button.onclick = () => { $('method').value = method.toUpperCase(); $('path').value = path; $('body').value = ''; $('etag').value = ''; $('idem').value = ''; $('probar').scrollIntoView(); $('path').focus(); };
-        $('operations').append(button);
+        const label = document.createElement('code'); label.textContent = ' ' + path;
+        heading.append(verb, label); article.append(heading);
+        const guide = operation['x-request-guide'] ?? {};
+        const example = operation.requestBody?.content?.['application/json']?.example;
+        addText(article, 'p', operation.summary ?? '');
+        addText(article, 'p', guide.access ?? '');
+        const headers = Object.entries(guide.headers ?? {});
+        if (headers.length) { addText(article, 'h4', 'Encabezados que debes enviar'); addText(article, 'pre', headers.map(([name, value]) => `${name}: ${value}`).join('\n')); }
+        const parameters = (operation.parameters ?? []).filter(p => p.in === 'path' || p.in === 'query');
+        if (parameters.length) {
+          addText(article, 'h4', 'Datos de la ruta y filtros');
+          const list = document.createElement('dl');
+          for (const p of parameters) { addText(list, 'dt', p.name + (p.required ? ' (obligatorio)' : ' (opcional)')); addText(list, 'dd', (p.description ?? '') + (p.example !== undefined ? ' Ejemplo: ' + p.example : '')); }
+          article.append(list);
+        }
+        addText(article, 'h4', 'JSON de la solicitud');
+        if (example !== undefined) {
+          addText(article, 'pre', JSON.stringify(example, null, 2));
+          const fields = document.createElement('dl');
+          for (const [name, description] of Object.entries(guide.fields ?? {})) { addText(fields, 'dt', name); addText(fields, 'dd', description); }
+          article.append(fields);
+        } else addText(article, 'p', 'No lleva cuerpo JSON. Deja vacío el campo de datos.');
+        for (const note of guide.notes ?? []) addText(article, 'p', note);
+        const button = document.createElement('button'); button.type = 'button'; button.textContent = 'Probar este endpoint';
+        button.onclick = () => {
+          $('method').value = method.toUpperCase(); $('path').value = path;
+          $('body').value = example === undefined ? '' : JSON.stringify(example, null, 2);
+          $('etag').value = guide.headers?.['If-Match'] ?? '';
+          $('idem').value = guide.headers?.['Idempotency-Key'] ? crypto.randomUUID() : '';
+          $('probar').scrollIntoView(); $('path').focus();
+        };
+        article.append(button); $('operations').append(article);
       }
     }
   } catch (error) { $('operations').textContent = error.message; }
+}
+function addText(parent, tag, value) {
+  const element = document.createElement(tag); element.textContent = value; parent.append(element);
 }
 $('request').addEventListener('submit', async (event) => {
   event.preventDefault(); const button = event.submitter; button.disabled = true;

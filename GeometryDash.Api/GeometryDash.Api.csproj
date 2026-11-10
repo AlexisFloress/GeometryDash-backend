@@ -13,6 +13,7 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.14" />
   </ItemGroup>
   <ItemGroup><EmbeddedResource Include="Data/Migrations/*.sql" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="Documentation/requests.json" /></ItemGroup>
   <ItemGroup>
     <Content Update="appsettings.Local.json" CopyToPublishDirectory="Never" />
     <Content Update="appsettings.Local.example.json" CopyToPublishDirectory="Never" />

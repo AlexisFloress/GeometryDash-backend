@@ -41,8 +41,14 @@ Check("No aceptar tiempo imposible", AttemptRules.Validate(completed, valid, 1) 
 Check("No aceptar muerte con 100%", AttemptRules.Validate(completed with { Outcome = "Dead" }, valid, 50) is not null);
 Check("No aceptar ticks negativos", AttemptRules.Validate(completed with { ElapsedTicks = -1 }, valid, 50) is not null);
 Check("Aceptar abandono sin avance", AttemptRules.Validate(new(Guid.NewGuid(), "Quit", 0, 0, 0), valid, 1) is null);
-Console.WriteLine($"{tests} comprobaciones aprobadas.");
 var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../GeometryDash.Api"));
+using var requestDocs = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "Documentation/requests.json")));
+var draftExample = requestDocs.RootElement.GetProperty("PUT /api/v1/levels/{id}/draft").GetProperty("example");
+var exampleDoc = draftExample.GetProperty("content").Deserialize<LevelDocument>(LevelRules.Json)!;
+Check("JSON documentado permite guardar y publicar el recorrido", LevelRules.Validate(draftExample.GetProperty("title").GetString()!, draftExample.GetProperty("description").GetString()!, draftExample.GetProperty("difficulty").GetString()!, exampleDoc, true).Count == 0);
+var resultExample = requestDocs.RootElement.GetProperty("PUT /api/v1/attempts/{id}/result").GetProperty("example").Deserialize<AttemptResult>(LevelRules.Json)!;
+Check("JSON documentado de resultado respeta las reglas de partida", AttemptRules.Validate(resultExample, exampleDoc, 1) is null);
+Console.WriteLine($"{tests} comprobaciones aprobadas.");
 var sourceFiles = Directory.EnumerateFiles(root, "*.cs", SearchOption.AllDirectories).Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar) && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)).ToArray();
 foreach (var file in sourceFiles)
 {

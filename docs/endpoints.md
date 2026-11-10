@@ -2,6 +2,8 @@
 
 Un endpoint es una dirección de la API que permite consultar información o realizar una acción. Aquí se explica cada uno con palabras sencillas.
 
+Para integrar la API en tu aplicación, consulta [cómo enviar solicitudes](solicitudes-api.md): incluye JSON completos, campos obligatorios, encabezados, filtros y notas para cada operación. Los mismos ejemplos aparecen en la documentación web y se cargan al seleccionar un endpoint en el probador.
+
 La documentación web y el probador son públicos: cualquier persona puede abrir `/docs/backend` sin una cuenta. En el backend publicado, la dirección es https://geometrydash-api.onrender.com/docs/backend. El probador aparece al final de la página y envía las solicitudes al servicio donde se abrió. Consultar niveles publicados no requiere sesión; guardar cambios o consultar datos privados sí requiere la cuenta y los permisos correspondientes.
 
 En las rutas, `{id}` se reemplaza por el identificador del nivel, la versión, la partida o la cuenta correspondiente. Una versión es una publicación concreta de un nivel: cuando el creador lo modifica y vuelve a publicarlo, aparece una versión nueva.

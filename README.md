@@ -62,6 +62,8 @@ Otra opción es copiar `.env.example` a `.env`, establecer `POSTGRES_PASSWORD` y
 
 Consulta [qué hace cada endpoint](docs/endpoints.md) para leer una explicación sencilla de cada operación y saber quién puede usarla. Estas explicaciones también aparecen en la documentación web de `/docs/backend`.
 
+La [referencia de solicitudes](docs/solicitudes-api.md) contiene los JSON de ejemplo, campos, encabezados y filtros para integrar la API. Los ejemplos se mantienen en `GeometryDash.Api/Documentation/requests.json`, se incluyen en OpenAPI y se cargan automáticamente en los probadores del frontend y del backend. Los endpoints sin cuerpo lo indican expresamente. Con la API ejecutándose, puedes comprobar la documentación sin cambiar datos con `node tests/api.documentation.mjs .local/docs-openapi.json` y regenerar la referencia con `node scripts/generate-endpoint-reference.mjs .local/docs-openapi.json`. Usa `GD_DOCS_URL` para comprobar otra dirección del contrato.
+
 La documentación y el probador al final de la página están disponibles sin iniciar sesión, tanto en desarrollo como en producción. Después de desplegar esta versión, se podrán abrir en https://geometrydash-api.onrender.com/docs/backend. El probador usa el servicio desde el que se abre la página, sin depender de localhost. Para probar inicio de sesión, renovación y cierre desde el dominio del backend, incluye también `https://geometrydash-api.onrender.com` en `AllowedOrigins`; conserva los orígenes del frontend que ya uses. Configura `AllowedHosts` con el nombre público del backend. Si sirves el frontend bajo el mismo dominio, conserva sus reglas para reenviar `/api/*` y `/openapi/*` al backend, antes del fallback de React.
 
 Identity, JWT y sesiones renovables; perfiles; borradores privados y concurrencia If-Match; validación de geometría; publicación por revisiones; catálogo; favoritos; votos; intentos y progreso; administración y auditoría. Los resultados de partidas son **ClientReported**, sin verificación de replay.
@@ -77,7 +79,7 @@ node tests/api.integration.mjs
 dotnet publish GeometryDash.Api --configuration Release --output artifacts/api
 ```
 
-La suite de dominio contiene 29 comprobaciones. La prueba HTTP crea cuentas y niveles: no la ejecutes contra datos reales. El workflow `.github/workflows/checks.yml` comprueba compilación y dominio cuando subas el repositorio a GitHub; no despliega ni accede a tu base local.
+La suite de dominio contiene 31 comprobaciones. La prueba HTTP crea cuentas y niveles: no la ejecutes contra datos reales. El workflow `.github/workflows/checks.yml` comprueba compilación y dominio cuando subas el repositorio a GitHub; no despliega ni accede a tu base local.
 
 `appsettings.Local.json` está excluido tanto de Git como del artefacto de publicación. Los secretos de producción se configuran en el servidor, no se copian desde tu computadora.
 

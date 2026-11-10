@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using GeometryDash.Api.Data;
 using GeometryDash.Api.Domain;
+using GeometryDash.Api.Documentation;
 using GeometryDash.Api.Endpoints;
 using GeometryDash.Api.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -33,7 +34,7 @@ builder.Services.AddIdentityCore<AppUser>(o => {
 
 builder.Services.AddScoped<SessionService>();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>(); builder.Services.AddProblemDetails();
-builder.Services.AddOpenApi("v1");
+builder.Services.AddOpenApi("v1", options => options.AddOperationTransformer<RequestDocumentation>());
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(o => {
     o.TokenValidationParameters = new() {
         ValidateIssuer = true, ValidIssuer = builder.Configuration["Jwt:Issuer"], ValidateAudience = true, ValidAudience = builder.Configuration["Jwt:Audience"],

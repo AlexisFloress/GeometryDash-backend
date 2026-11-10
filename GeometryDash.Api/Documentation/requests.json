@@ -1,6 +1,11 @@
 {
   "POST /api/v1/auth/register": {
-    "example": { "userName": "jugador_demo", "displayName": "Jugador Demo", "email": "jugador@example.com", "password": "MiClaveSegura123" },
+    "example": {
+      "userName": "jugador_demo",
+      "displayName": "Jugador Demo",
+      "email": "jugador@example.com",
+      "password": "MiClaveSegura123"
+    },
     "fields": {
       "userName": "Obligatorio. Nombre de usuario de 3 a 30 caracteres; debe estar disponible.",
       "displayName": "Obligatorio. Nombre visible de 1 a 60 caracteres.",
@@ -10,26 +15,64 @@
     "notes": ["Crear la cuenta no inicia sesión. Después utiliza el endpoint de login."]
   },
   "POST /api/v1/auth/login": {
-    "example": { "email": "jugador@example.com", "password": "MiClaveSegura123" },
-    "fields": { "email": "Obligatorio. Correo de una cuenta registrada y activa.", "password": "Obligatorio. Contraseña de esa cuenta." },
-    "notes": ["La respuesta incluye accessToken. Úsalo en Authorization: Bearer TU_ACCESS_TOKEN para las operaciones privadas. La cookie de renovación se recibe automáticamente."]
+    "example": {
+      "email": "jugador@example.com",
+      "password": "MiClaveSegura123"
+    },
+    "fields": {
+      "email": "Obligatorio. Correo de una cuenta registrada y activa.",
+      "password": "Obligatorio. Contraseña de esa cuenta."
+    },
+    "notes": [
+      "La respuesta incluye accessToken. Úsalo en Authorization: Bearer TU_ACCESS_TOKEN para las operaciones privadas. La cookie de renovación se recibe automáticamente."
+    ]
   },
   "PATCH /api/v1/me": {
-    "example": { "displayName": "Mi nuevo nombre" },
-    "fields": { "displayName": "Obligatorio. Nuevo nombre visible de 1 a 60 caracteres. Este endpoint no cambia el correo, usuario ni contraseña." }
+    "example": {
+      "displayName": "Mi nuevo nombre"
+    },
+    "fields": {
+      "displayName": "Obligatorio. Nuevo nombre visible de 1 a 60 caracteres. Este endpoint no cambia el correo, usuario ni contraseña."
+    }
   },
   "POST /api/v1/levels": {
-    "example": { "title": "Mi primer recorrido", "description": "Un nivel para practicar saltos." },
-    "fields": { "title": "Obligatorio. Título de 3 a 80 caracteres.", "description": "Opcional en esta operación. Hasta 2000 caracteres; si se omite, queda vacía." },
-    "notes": ["Conserva la misma Idempotency-Key y el mismo JSON si reintentas la creación. Usa una clave nueva para cada nivel nuevo.", "La respuesta incluye levelId, revisionId, levelVersion y version. Guarda esos valores para editar y publicar el nivel."]
+    "example": {
+      "title": "Mi primer recorrido",
+      "description": "Un nivel para practicar saltos."
+    },
+    "fields": {
+      "title": "Obligatorio. Título de 3 a 80 caracteres.",
+      "description": "Opcional en esta operación. Hasta 2000 caracteres; si se omite, queda vacía."
+    },
+    "notes": [
+      "Conserva la misma Idempotency-Key y el mismo JSON si reintentas la creación. Usa una clave nueva para cada nivel nuevo.",
+      "La respuesta incluye levelId, revisionId, levelVersion y version. Guarda esos valores para editar y publicar el nivel."
+    ]
   },
   "PUT /api/v1/levels/{id}/draft": {
     "example": {
-      "title": "Mi primer recorrido", "description": "Un nivel para practicar saltos.", "difficulty": "Normal",
+      "title": "Mi primer recorrido",
+      "description": "Un nivel para practicar saltos.",
+      "difficulty": "Normal",
       "content": {
-        "schemaVersion": 1, "physicsVersion": 1, "length": 300, "speedMultiplier": 1,
-        "spawn": { "x": 2, "y": 0 }, "finishX": 298,
-        "objects": [{ "id": "obj_01", "type": "triangle", "x": 20, "y": 0, "width": 1, "height": 1, "rotation": 0 }]
+        "schemaVersion": 1,
+        "physicsVersion": 1,
+        "length": 300,
+        "speedMultiplier": 1,
+        "spawn": {
+          "x": 2,
+          "y": 0
+        },
+        "finishX": 298,
+        "objects": [{
+          "id": "obj_01",
+          "type": "triangle",
+          "x": 20,
+          "y": 0,
+          "width": 1,
+          "height": 1,
+          "rotation": 0
+        }]
       }
     },
     "fields": {
@@ -47,28 +90,55 @@
       "content.objects[].x / y": "Obligatorios. Posiciones no negativas en pasos de 0.5. Reserva 4 unidades tras el inicio y 2 antes de la meta. El objeto debe quedar dentro del recorrido y no superar la altura 30.",
       "content.objects[].width / height / rotation": "Obligatorios. cube y triangle miden 1 × 1. platform tiene ancho de 1 a 10, en pasos de 0.5, y altura 0.5. La rotación siempre es 0."
     },
-    "notes": ["Usa el ETag de la lectura o guardado más reciente en If-Match, incluidas las comillas. El valor de ejemplo no reemplaza la versión real de tu borrador.", "No se permiten objetos superpuestos, salvo entre dos triángulos. El recorrido no puede superar 512 KiB."]
+    "notes": [
+      "Usa el ETag de la lectura o guardado más reciente en If-Match, incluidas las comillas. El valor de ejemplo no reemplaza la versión real de tu borrador.",
+      "No se permiten objetos superpuestos, salvo entre dos triángulos. El recorrido no puede superar 512 KiB."
+    ]
   },
   "POST /api/v1/levels/{id}/publish": {
-    "example": { "draftRevisionId": "11111111-1111-4111-8111-111111111111", "expectedLevelVersion": 1 },
+    "example": {
+      "draftRevisionId": "11111111-1111-4111-8111-111111111111",
+      "expectedLevelVersion": 1
+    },
     "fields": {
       "draftRevisionId": "Obligatorio. Copia el revisionId del borrador guardado que quieres publicar.",
       "expectedLevelVersion": "Obligatorio. Copia levelVersion del borrador; no es el mismo dato que version ni el número de revisión."
     },
-    "notes": ["Primero guarda el recorrido. Envía el ETag del último guardado en If-Match. Si el nivel cambió, consulta el borrador otra vez antes de publicar.", "Los identificadores y versiones del ejemplo son ilustrativos: reemplázalos por los que devolvió tu nivel."]
+    "notes": [
+      "Primero guarda el recorrido. Envía el ETag del último guardado en If-Match. Si el nivel cambió, consulta el borrador otra vez antes de publicar.",
+      "Los identificadores y versiones del ejemplo son ilustrativos: reemplázalos por los que devolvió tu nivel."
+    ]
   },
   "PUT /api/v1/revisions/{id}/rating": {
-    "example": { "score": 5 },
-    "fields": { "score": "Obligatorio. Número entero de 1 a 5 estrellas." },
-    "notes": ["El id de la ruta es el revisionId de la versión que jugaste, no el levelId. Debes haber terminado una partida en esa versión y no puedes ser su creador. No es obligatorio haberla completado al 100%."]
+    "example": {
+      "score": 5
+    },
+    "fields": {
+      "score": "Obligatorio. Número entero de 1 a 5 estrellas."
+    },
+    "notes": [
+      "El id de la ruta es el revisionId de la versión que jugaste, no el levelId. Debes haber terminado una partida en esa versión y no puedes ser su creador. No es obligatorio haberla completado al 100%."
+    ]
   },
   "POST /api/v1/levels/{id}/attempts": {
-    "example": { "expectedRevisionId": "11111111-1111-4111-8111-111111111111" },
-    "fields": { "expectedRevisionId": "Obligatorio. Copia revisionId de GET /api/v1/levels/{id}/content. Debe corresponder a la publicación actual." },
-    "notes": ["El id de la ruta es el levelId. La respuesta devuelve el id de la partida; úsalo para enviar el resultado. Máximo cinco partidas activas por cuenta; cada una vence a los 30 minutos."]
+    "example": {
+      "expectedRevisionId": "11111111-1111-4111-8111-111111111111"
+    },
+    "fields": {
+      "expectedRevisionId": "Obligatorio. Copia revisionId de GET /api/v1/levels/{id}/content. Debe corresponder a la publicación actual."
+    },
+    "notes": [
+      "El id de la ruta es el levelId. La respuesta devuelve el id de la partida; úsalo para enviar el resultado. Máximo cinco partidas activas por cuenta; cada una vence a los 30 minutos."
+    ]
   },
   "PUT /api/v1/attempts/{id}/result": {
-    "example": { "clientResultId": "22222222-2222-4222-8222-222222222222", "outcome": "Quit", "elapsedTicks": 0, "pauseTicks": 0, "progressPercent": 0 },
+    "example": {
+      "clientResultId": "22222222-2222-4222-8222-222222222222",
+      "outcome": "Quit",
+      "elapsedTicks": 0,
+      "pauseTicks": 0,
+      "progressPercent": 0
+    },
     "fields": {
       "clientResultId": "Obligatorio. UUID nuevo para este resultado. Consérvalo al reintentar el mismo envío.",
       "outcome": "Obligatorio. Completed si llegaste a la meta, Dead si perdiste o Quit si abandonaste.",
@@ -76,25 +146,48 @@
       "pauseTicks": "Obligatorio. Entero entre 0 y 216000. Tiempo en pausa, en pasos de 1/120 de segundo.",
       "progressPercent": "Obligatorio. Avance de 0 a 100, coherente con el tiempo jugado y la velocidad del recorrido. Solo Completed permite 100."
     },
-    "notes": ["El ejemplo representa abandonar al inicio. Para una partida real usa los datos medidos por el juego; no inventes tiempos ni avances.", "El id de la ruta es el de tu partida, obtenido al iniciarla. Reenviar el mismo clientResultId y los mismos datos no duplica el resultado; cambiar un resultado ya guardado produce un conflicto."]
+    "notes": [
+      "El ejemplo representa abandonar al inicio. Para una partida real usa los datos medidos por el juego; no inventes tiempos ni avances.",
+      "El id de la ruta es el de tu partida, obtenido al iniciarla. Reenviar el mismo clientResultId y los mismos datos no duplica el resultado; cambiar un resultado ya guardado produce un conflicto."
+    ]
   },
   "POST /api/v1/admin/levels/{id}/withdraw": {
-    "example": { "reason": "El nivel contiene contenido que incumple las reglas." },
-    "fields": { "reason": "Obligatorio. Motivo de 1 a 1000 caracteres. Queda registrado en el historial de administración." }
+    "example": {
+      "reason": "El nivel contiene contenido que incumple las reglas."
+    },
+    "fields": {
+      "reason": "Obligatorio. Motivo de 1 a 1000 caracteres. Queda registrado en el historial de administración."
+    }
   },
   "POST /api/v1/admin/levels/{id}/restore": {
-    "example": { "reason": "Se revisó el contenido y el nivel puede volver a publicarse." },
-    "fields": { "reason": "Obligatorio. Motivo de 1 a 1000 caracteres. Queda registrado en el historial de administración." },
-    "notes": ["Solo permite restaurar un nivel retirado por administración que conserve una versión publicada; no recupera niveles eliminados."]
+    "example": {
+      "reason": "Se revisó el contenido y el nivel puede volver a publicarse."
+    },
+    "fields": {
+      "reason": "Obligatorio. Motivo de 1 a 1000 caracteres. Queda registrado en el historial de administración."
+    },
+    "notes": [
+      "Solo permite restaurar un nivel retirado por administración que conserve una versión publicada; no recupera niveles eliminados."
+    ]
   },
   "POST /api/v1/admin/users/{id}/suspend": {
-    "example": { "reason": "La cuenta incumplió las reglas de la comunidad." },
-    "fields": { "reason": "Obligatorio. Motivo de 1 a 1000 caracteres. Queda registrado en el historial de administración." },
+    "example": {
+      "reason": "La cuenta incumplió las reglas de la comunidad."
+    },
+    "fields": {
+      "reason": "Obligatorio. Motivo de 1 a 1000 caracteres. Queda registrado en el historial de administración."
+    },
     "notes": ["No puedes suspender tu propia cuenta."]
   },
   "POST /api/v1/admin/users/{id}/activate": {
-    "example": { "reason": "Se revisó la suspensión y se permite el acceso nuevamente." },
-    "fields": { "reason": "Obligatorio. Motivo de 1 a 1000 caracteres. Queda registrado en el historial de administración." },
-    "notes": ["La persona tendrá que iniciar sesión otra vez. No puedes moderar tu propia cuenta ni reactivar una cuenta eliminada."]
+    "example": {
+      "reason": "Se revisó la suspensión y se permite el acceso nuevamente."
+    },
+    "fields": {
+      "reason": "Obligatorio. Motivo de 1 a 1000 caracteres. Queda registrado en el historial de administración."
+    },
+    "notes": [
+      "La persona tendrá que iniciar sesión otra vez. No puedes moderar tu propia cuenta ni reactivar una cuenta eliminada."
+    ]
   }
 }

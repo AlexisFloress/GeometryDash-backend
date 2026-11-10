@@ -32,7 +32,8 @@ Check("Rechazar NaN sin excepción", Validate(valid with { SpeedMultiplier = dou
 Check("Hash estable sin depender del orden", LevelRules.Hash(LevelRules.Canonical(valid)) == LevelRules.Hash(LevelRules.Canonical(valid with { Objects = valid.Objects.Reverse().ToArray() })));
 Check("Hash cambia con contenido", LevelRules.Hash(LevelRules.Canonical(valid)) != LevelRules.Hash(LevelRules.Canonical(valid with { SpeedMultiplier = 1.5 })));
 var unknown = LevelRules.Canonical(valid).Replace("\"rotation\":0", "\"rotation\":0,\"script\":true");
-var rejected = false; try { JsonSerializer.Deserialize<LevelDocument>(unknown, LevelRules.Json); } catch (JsonException) { rejected = true; }
+var rejected = false;
+try { JsonSerializer.Deserialize<LevelDocument>(unknown, LevelRules.Json); } catch (JsonException) { rejected = true; }
 Check("Rechazar propiedades desconocidas", rejected);
 var completed = new AttemptResult(Guid.NewGuid(), "Completed", 5920, 0, 100);
 Check("Completar con ticks suficientes", AttemptRules.Validate(completed, valid, 50) is null);
@@ -54,6 +55,8 @@ foreach (var file in sourceFiles)
 {
     var syntax = CSharpSyntaxTree.ParseText(File.ReadAllText(file));
     var errors = syntax.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
-    if (errors.Length > 0) throw new Exception(file + ": " + string.Join("; ", errors.Select(e => e.ToString())));
+
+    if (errors.Length > 0)
+        throw new Exception(file + ": " + string.Join("; ", errors.Select(e => e.ToString())));
 }
 Console.WriteLine($"Sintaxis C# válida en {sourceFiles.Length} archivos. La comprobación semántica de la API requiere restaurar NuGet.");

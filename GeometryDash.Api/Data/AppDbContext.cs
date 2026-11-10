@@ -15,6 +15,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<PlayAttempt> Attempts => Set<PlayAttempt>();
     public DbSet<UserRevisionProgress> Progress => Set<UserRevisionProgress>();
     public DbSet<AuditEvent> Audit => Set<AuditEvent>();
+
     protected override void OnModelCreating(ModelBuilder b)
     {
         base.OnModelCreating(b);
@@ -38,7 +39,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
         b.Entity<LevelRevision>().Property(x => x.Title).HasMaxLength(80);
         b.Entity<LevelRevision>().Property(x => x.Description).HasMaxLength(2000);
         b.Entity<LevelRevision>().Property(x => x.Content).HasColumnType("jsonb");
-        b.Entity<LevelRevision>().ToTable(t => {
+        b.Entity<LevelRevision>().ToTable(t =>
+        {
             t.HasCheckConstraint("CK_Revision_State", "\"State\" IN ('Draft','Published')");
             t.HasCheckConstraint("CK_Revision_Difficulty", "\"Difficulty\" IN ('Easy','Normal','Hard')");
         });
@@ -54,7 +56,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
         b.Entity<PlayAttempt>().HasOne<LevelRevision>().WithMany().HasForeignKey(x => x.RevisionId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<PlayAttempt>().HasIndex(x => new { x.UserId, x.StartedAt });
         b.Entity<PlayAttempt>().HasIndex(x => new { x.RevisionId, x.StartedAt });
-        b.Entity<PlayAttempt>().ToTable(t => {
+        b.Entity<PlayAttempt>().ToTable(t =>
+        {
             t.HasCheckConstraint("CK_Attempt_State", "\"State\" IN ('Started','Finished','Abandoned','Expired')");
             t.HasCheckConstraint("CK_Attempt_Outcome", "\"Outcome\" IS NULL OR \"Outcome\" IN ('Dead','Completed','Quit')");
             t.HasCheckConstraint("CK_Attempt_Progress", "\"ProgressPercent\" BETWEEN 0 AND 100");
